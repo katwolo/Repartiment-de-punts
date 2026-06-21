@@ -1,6 +1,40 @@
 // REPARTIMENT DE PUNTS — Servidor Apps Script
 // Gestiona sessions de coevaluació i emmagatzema dades al Google Sheets vinculat.
 
+// ---------------------------------------------------------------------------
+// SYNC — actualitza el codi des del repositori GitHub (repo públic)
+// Executa aquesta funció des de l'editor d'Apps Script per sincronitzar.
+// ---------------------------------------------------------------------------
+function updateFromGitHub() {
+  const BRANCH = 'claude/app-script-code-from-url-9tu03y';
+  const RAW    = 'https://raw.githubusercontent.com/katwolo/Repartiment-de-punts/' + BRANCH + '/';
+
+  const files = [
+    { name: 'appsscript', type: 'json',     source: UrlFetchApp.fetch(RAW + 'appsscript.json').getContentText() },
+    { name: 'Code',       type: 'server_js', source: UrlFetchApp.fetch(RAW + 'Code.gs').getContentText() },
+    { name: 'index',      type: 'html',      source: UrlFetchApp.fetch(RAW + 'index.html').getContentText() }
+  ];
+
+  const response = UrlFetchApp.fetch(
+    'https://script.googleapis.com/v1/projects/' + ScriptApp.getScriptId() + '/content',
+    {
+      method: 'put',
+      headers: {
+        'Authorization': 'Bearer ' + ScriptApp.getOAuthToken(),
+        'Content-Type': 'application/json'
+      },
+      payload: JSON.stringify({ files: files }),
+      muteHttpExceptions: true
+    }
+  );
+
+  if (response.getResponseCode() !== 200) {
+    throw new Error('Error sincronitzant: ' + response.getContentText());
+  }
+
+  Logger.log('✓ Codi actualitzat correctament des de GitHub!');
+}
+
 function doGet(e) {
   return HtmlService.createTemplateFromFile('index')
     .evaluate()
