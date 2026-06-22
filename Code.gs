@@ -18,12 +18,15 @@ const HEADERS = {
   Evaluations:  ['groupId','method','evaluatorId','payload']
 };
 
+const INDEX_URL = 'https://raw.githubusercontent.com/katwolo/Repartiment-de-punts/claude/app-script-code-from-url-9tu03y/index.html';
+
 function ss(){ return SpreadsheetApp.getActiveSpreadsheet(); }
 
 /* ---------- Servir l'aplicació ---------- */
 function doGet(){
   setupSheets();
-  return HtmlService.createHtmlOutputFromFile('Index')
+  const html = UrlFetchApp.fetch(INDEX_URL).getContentText();
+  return HtmlService.createHtmlOutput(html)
     .setTitle('Repartiment de punts')
     .addMetaTag('viewport','width=device-width, initial-scale=1.0')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
