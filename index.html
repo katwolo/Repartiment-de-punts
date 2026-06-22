@@ -1232,8 +1232,19 @@ function errScreen(e){
     </div></div>`;
 }
 function boot(){
-  root.innerHTML=loadingScreen();
-  google.script.run.withSuccessHandler(s=>{ state=s; render(); }).withFailureHandler(e=>{ root.innerHTML=errScreen(e); }).loadState();
+  root.innerHTML = loadingScreen();
+  const timeout = setTimeout(()=>{
+    root.innerHTML = errScreen({message:'Temps d\'espera exhaurit. Comprova que accedeixes via la URL del web app de Google Apps Script.'});
+  }, 20000);
+  try {
+    google.script.run
+      .withSuccessHandler(s=>{ clearTimeout(timeout); state=s; render(); })
+      .withFailureHandler(e=>{ clearTimeout(timeout); root.innerHTML=errScreen(e); })
+      .loadState();
+  } catch(e){
+    clearTimeout(timeout);
+    root.innerHTML = errScreen({message:'No s\'ha pogut connectar amb el servidor. Accedeix via la URL del web app de Google Apps Script.'});
+  }
 }
 boot();
 </script>
