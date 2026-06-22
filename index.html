@@ -263,21 +263,10 @@ const SCALE_SVG = `<svg class="scale" viewBox="0 0 48 48" fill="none" xmlns="htt
 const GAS = (typeof google!=='undefined' && google.script && google.script.run);
 let SESSION = null;   // usuari amb sessió iniciada (només al client, no es desa)
 
-const KEY = 'rdp_state_v1';
-let MEM = null;
-function localLoad(){
-  try{ const raw=localStorage.getItem(KEY); if(raw) return JSON.parse(raw); }catch(e){ if(MEM) return MEM; }
-  return null;
-}
-function localSave(){
-  try{ localStorage.setItem(KEY, JSON.stringify({users:state.users,groups:state.groups})); }catch(e){ MEM=state; }
-}
-
 /* persistència de configuració (usuaris, grups, tasques) */
 function save(){
-  if(GAS){ google.script.run.withSuccessHandler(syncState).withFailureHandler(persistErr)
-            .saveStateBulk(JSON.stringify({users:state.users, groups:state.groups})); }
-  else { localSave(); }
+  google.script.run.withSuccessHandler(syncState).withFailureHandler(persistErr)
+    .saveStateBulk(JSON.stringify({users:state.users, groups:state.groups}));
 }
 function syncState(s){ if(s && s.groups){ state=s; render(); } }
 function persistErr(e){ console.error('Error desant:', e); }
@@ -1224,8 +1213,7 @@ function saveProfile(){
 
 function resetDemo(){
   if(!confirm('Restaurar totes les dades de demostració? Es perdran els canvis.')) return;
-  if(GAS){ google.script.run.withSuccessHandler(s=>{state=s;view='home';render();}).withFailureHandler(persistErr).resetDemo(); }
-  else { state=seed(); localSave(); view='home'; render(); }
+  google.script.run.withSuccessHandler(s=>{state=s;view='home';render();}).withFailureHandler(persistErr).resetDemo();
 }
 
 /* ---------- ARRENCADA ---------- */
@@ -1247,12 +1235,8 @@ function errScreen(e){
     </div></div>`;
 }
 function boot(){
-  if(GAS){
-    root.innerHTML=loadingScreen();
-    google.script.run.withSuccessHandler(s=>{ state=s; render(); }).withFailureHandler(e=>{ root.innerHTML=errScreen(e); }).loadState();
-  } else {
-    render();
-  }
+  root.innerHTML=loadingScreen();
+  google.script.run.withSuccessHandler(s=>{ state=s; render(); }).withFailureHandler(e=>{ root.innerHTML=errScreen(e); }).loadState();
 }
 boot();
 </script>
