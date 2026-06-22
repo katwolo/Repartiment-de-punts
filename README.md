@@ -1,84 +1,76 @@
 # Repartiment de Punts
 
-Eina de coevaluació entre iguals per a grups de treball. Permet que professors i alumnes gestionin grups, tasques i avaluacions mútues de forma anònima, amb tres mètodes de valoració diferents.
+Eina de coevaluació entre iguals per a grups de treball. Permet gestionar grups, tasques i avaluacions mútues amb tres mètodes de valoració diferents, des que s'inicia el treball en grup fins que cada alumne obté la seva nota individual.
 
 ---
 
-## Arquitectura
+## Rols
 
-| Component | Ubicació |
+| Rol | Qui és |
 |---|---|
-| **Backend** (`Code.gs`) | Projecte Google Apps Script (container-bound al Sheets) |
-| **Frontend** (`index.html`) | Repositori GitHub (servit via `UrlFetchApp` en cada petició) |
-| **Base de dades** | Google Sheets vinculat al projecte d'Apps Script |
+| **Administració** | Gestiona tots els usuaris i grups del centre |
+| **Professor/a** | Crea i configura els grups, posa la nota base i publica els resultats |
+| **Coordinador/a** | Un/a alumne/a designat/a pel professor dins el grup. Gestiona les tasques i controla el procés d'avaluació |
+| **Alumne/a** | Membre del grup. Completa la seva avaluació i consulta els resultats |
 
-El `doGet()` de Apps Script busca el `index.html` directament des de GitHub, de manera que qualsevol canvi al repositori es reflecteix a la web sense necessitat de redesplegar.
-
----
-
-## Rols d'usuari
-
-| Rol | Capacitats |
-|---|---|
-| **Admin** | Gestió completa d'usuaris i grups de tot el centre |
-| **Professor** | Crea i gestiona els seus grups, activa avaluacions, publica resultats |
-| **Alumne** | Consulta les tasques del seu grup, participa al xat i envia avaluacions |
+La diferència clau entre coordinador/a i alumne/a és que el coordinador/a té accés al **panell de control** del grup: pot crear i editar tasques, triar el mètode de valoració i obrir o tancar l'avaluació. L'alumne/a participa en l'avaluació però no en pot controlar el procés.
 
 ---
 
-## Tres mètodes d'avaluació
+## Cicle complet d'un treball en grup
+
+### 1. El professor crea el grup
+- Afegeix un nom, l'assignatura i els membres.
+- Designa un/a **coordinador/a** entre l'alumnat.
+- Introdueix la **nota base** del grup (0–10).
+
+### 2. El coordinador prepara el treball *(opcional però recomanat)*
+- Crea les **tasques** del projecte: títol, descripció, punts i membre assignat.
+- Cada tasca pot tenir estat: `pendent`, `parcial` o `fet`.
+
+### 3. El coordinador configura i activa l'avaluació
+- Tria el **mètode de valoració** (vegeu més avall).
+- Prem **Activar valoració** per obrir el formulari a tot el grup.
+
+### 4. Cada alumne completa la seva avaluació
+- Accedeix a la pestanya **Valoració** del seu grup.
+- Avalua els seus companys/es segons el mètode triat.
+- Cada alumne només pot enviar una valoració (es pot sobreescriure fins que es tanqui).
+
+### 5. El coordinador tanca l'avaluació
+- Un cop tothom ha votat (o quan el professor ho decideix), el coordinador prem **Tancar valoració**.
+
+### 6. El professor revisa i publica els resultats
+- Accedeix a la pestanya **Resultats** per veure totes les valoracions i les notes individuals calculades.
+- Prem **Publicar resultats** perquè cada alumne pugui veure la seva nota.
+
+### 7. L'alumne consulta la seva nota
+- A la pestanya **Resultats** veu la nota individual que el sistema ha calculat a partir de les valoracions dels companys.
+
+---
+
+## Mètodes de valoració
 
 ### M1 · Borsa de Punts
-El professor introdueix una nota base (0–10). La borsa total és `nota × nombre d'integrants`. Cada alumne reparteix lliurement aquests punts entre els companys (sense poder puntuar-se a si mateix) segons la seva contribució al treball.
+La borsa total és `nota base × nombre de membres`. Cada alumne reparteix lliurement aquests punts entre els companys (no pot puntuar-se a si mateix). La nota individual de cada membre és proporcional als punts que ha rebut.
 
-### M2 · Tasques / Àgil
-L'avaluació es basa en les tasques assignades al grup. Cada tasca té punts i un estat (`pendent`, `parcial`, `fet`). El sistema calcula automàticament la nota individual de cada alumne a partir dels punts de les tasques completades.
+**Exemple:** grup de 4 amb nota base 8 → borsa de 32 punts. Si l'Anna rep 10, en Bru 9, la Carla 8 i en Dani 5, les seves notes individuals es calculen proporcionalment.
 
-### M3 · Rúbrica (matriu de coeficients)
-Cada alumne assigna un multiplicador (ex. 0.8, 1.0, 1.2) a cadascun dels seus companys. El professor aplica la mitjana dels coeficients rebuts a la nota del grup per obtenir la nota individual.
+### M2 · Tasques (Mètode Àgil)
+L'avaluació es basa en les tasques definides al grup. Cada tasca té uns punts assignats i un estat:
+- `fet` → 100% dels punts
+- `parcial` → 50% dels punts
+- `pendent` → 0% dels punts
 
----
+La nota individual de cada membre s'obté dels punts de les seves tasques completades, ajustats respecte la nota base del grup.
 
-## Flux d'ús
+### M3 · Coeficients (Rúbrica)
+Cada alumne assigna un coeficient (ex. 0.8, 1.0, 1.2) a cadascun dels seus companys. La nota individual és la nota base del grup multiplicada per la mitjana dels coeficients rebuts.
 
-### Per al professor
-1. Inicia sessió i accedeix al tauler.
-2. Crea un grup, afegeix membres i assigna tasques (opcionals).
-3. Selecciona el mètode d'avaluació i introdueix la nota base del grup.
-4. Activa l'avaluació — els alumnes reben accés al formulari.
-5. Quan tots han votat, publica els resultats des del tauler.
-
-### Per a l'alumne
-1. Inicia sessió i accedeix al seu grup.
-2. Consulta les tasques assignades i l'estat del grup.
-3. Participa al xat de grup.
-4. Quan l'avaluació és activa, completa el formulari de valoració dels companys.
-5. Un cop publicats, consulta els resultats finals.
+**Exemple:** si l'Anna rep coeficients 1.2, 1.1 i 1.0 dels seus tres companys → coeficient mitjà 1.1 → nota = 8 × 1.1 = **8.8**.
 
 ---
 
-## Emmagatzematge de dades
+## Xat de grup
 
-Tota la informació es guarda al Google Sheets vinculat. Les pestanyes es creen automàticament en el primer accés:
-
-| Pestanya | Columnes | Contingut |
-|---|---|---|
-| **Users** | id, name, email, pass, role, classe | Usuaris registrats |
-| **Groups** | id, name, subject, teacherId, coordinatorId, memberIds, grade, method, evalActive, resultsPublished | Grups de treball |
-| **Tasks** | id, groupId, title, desc, points, assignedTo, status | Tasques individuals |
-| **Messages** | groupId, userId, text, ts | Missatges del xat de grup |
-| **Evaluations** | groupId, method, evaluatorId, payload | Avaluacions (un registre per avaluador) |
-
----
-
-## Desplegament
-
-1. Crea un Google Sheets nou (les pestanyes es generen soles).
-2. Obre **Extensions > Apps Script** i substitueix el `Code.gs` pel del repositori.
-3. A **Implementa > Nova implementació**:
-   - Tipus: Aplicació web
-   - Executa com a: Jo
-   - Qui hi té accés: Qualsevol
-4. Copia la URL de la web app i comparteix-la amb els usuaris.
-
-> Les dades de demostració es poden restaurar en qualsevol moment des del menú **Repartiment de punts > Restaurar dades de demostració** dins del Sheets.
+Tots els membres (alumnat i professor) poden enviar missatges al xat intern del grup. Els missatges del coordinador/a apareixen destacats. Serveix per coordinar el treball i resoldre dubtes durant tot el procés.
