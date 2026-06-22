@@ -476,18 +476,19 @@ function doLogin(){
   const u=state.users.find(x=>x.email.toLowerCase()===email && x.pass===pass);
   if(!u){ renderLogin('Credencials incorrectes. Revisa el correu i la contrasenya.'); return; }
   SESSION=u.id; view='home'; ctx={}; render();
+  if(u.role==='student' && u.pass==='1234') firstLoginModal(u.id);
 }
 function logout(){ SESSION=null; view='home'; ctx={}; render(); }
 
 /* ---------- SHELL ---------- */
 function navFor(role){
   if(role==='admin') return [
-    ['home','📊','Tauler'],['users','👥','Usuaris'],['groups','📁','Tots els grups']
+    ['home','📊','Tauler'],['users','👥','Usuaris'],['groups','📁','Tots els grups'],['profile','👤','Perfil']
   ];
   if(role==='teacher') return [
-    ['home','📊','Tauler'],['groups','📁','Els meus grups']
+    ['home','📊','Tauler'],['groups','📁','Els meus grups'],['profile','👤','Perfil']
   ];
-  return [['home','📊','Els meus grups']];
+  return [['home','📊','Els meus grups'],['profile','👤','Perfil']];
 }
 function renderShell(u){
   const items=navFor(u.role);
@@ -516,6 +517,7 @@ function renderMain(u){
   if(view==='users') return renderUsers(m);
   if(view==='groups') return renderGroups(m,u);
   if(view==='group') return renderGroup(m,u);
+  if(view==='profile') return renderProfile(m,u);
   return renderHome(m,u);
 }
 
@@ -1163,6 +1165,72 @@ function openModal(html,extra=''){
   document.body.appendChild(o);
 }
 function closeModal(){ const o=$('ovl'); if(o)o.remove(); }
+
+/* ---------- PRIMER ACCÉS: contrasenya predeterminada ---------- */
+function firstLoginModal(uid){
+  openModal(`
+    <h2>Benvingut/da! 👋</h2>
+    <div class="msub">La teva contrasenya és la predeterminada <b>(1234)</b>. Et recomanem canviar-la per una de més segura.</div>
+    <div class="field"><label>Nova contrasenya</label><input id="fl-new" type="password" placeholder="Mínim 4 caràcters" autocomplete="new-password"></div>
+    <div class="field"><label>Confirmar contrasenya</label><input id="fl-conf" type="password" placeholder="Repeteix la contrasenya" autocomplete="new-password"></div>
+    <div id="fl-err" style="color:var(--coral);font-size:13px;min-height:18px"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">Ara no</button>
+      <button class="btn btn-primary btn-sm" style="width:auto" onclick="saveFirstPass('${uid}')">Canviar contrasenya</button>
+    </div>`);
+}
+function saveFirstPass(uid){
+  const np=$('fl-new').value, nc=$('fl-conf').value, err=$('fl-err');
+  if(np.length<4){ err.textContent='La contrasenya ha de tenir mínim 4 caràcters.'; return; }
+  if(np!==nc){ err.textContent='Les contrasenyes no coincideixen.'; return; }
+  const u=state.users.find(x=>x.id===uid);
+  u.pass=np; save(); closeModal();
+}
+
+/* ---------- PERFIL ---------- */
+function renderProfile(m,u){
+  m.innerHTML=`
+  <div class="page-wrap">
+    <div class="page-head"><div><div class="crumb">Compte</div><h1>El meu perfil</h1></div></div>
+    <div class="card" style="max-width:480px">
+      <h3 style="margin-bottom:16px;font-size:17px">Dades personals</h3>
+      <div class="field"><label>Nom complet</label><input id="pf-name" value="${esc(u.name)}" placeholder="Nom i cognoms"></div>
+      <div class="field"><label>Correu electrònic</label><input id="pf-email" type="email" value="${esc(u.email)}" placeholder="correu@institut.cat" autocomplete="username"></div>
+      <div style="border-top:1px solid var(--line);margin:22px 0 18px"></div>
+      <h3 style="margin-bottom:16px;font-size:17px">Canviar contrasenya</h3>
+      <div class="help" style="margin-bottom:14px">Deixa els camps buits si no vols canviar la contrasenya.</div>
+      <div class="field"><label>Contrasenya actual</label><input id="pf-cur" type="password" placeholder="••••" autocomplete="current-password"></div>
+      <div class="field"><label>Nova contrasenya</label><input id="pf-new" type="password" placeholder="Mínim 4 caràcters" autocomplete="new-password"></div>
+      <div class="field"><label>Confirmar nova contrasenya</label><input id="pf-conf" type="password" placeholder="Repeteix la nova contrasenya" autocomplete="new-password"></div>
+      <div id="pf-msg" style="font-size:13px;min-height:18px;margin-top:4px"></div>
+      <div style="margin-top:20px"><button class="btn btn-primary" onclick="saveProfile()" style="width:auto;min-width:160px">Desar canvis</button></div>
+    </div>
+  </div>`;
+}
+function saveProfile(){
+  const u=me();
+  const name=$('pf-name').value.trim();
+  const email=$('pf-email').value.trim().toLowerCase();
+  const cur=$('pf-cur').value, np=$('pf-new').value, nc=$('pf-conf').value;
+  const msg=$('pf-msg');
+  const err=t=>{ msg.style.color='var(--coral)'; msg.textContent=t; };
+  const ok=t=>{ msg.style.color='var(--teal)'; msg.textContent=t; };
+
+  if(!name) return err('El nom no pot estar buit.');
+  if(!email) return err('El correu no pot estar buit.');
+  if(email!==u.email.toLowerCase()){
+    if(state.users.find(x=>x.id!==u.id&&x.email.toLowerCase()===email))
+      return err('Aquest correu ja l\'utilitza un altre usuari.');
+  }
+  if(cur||np||nc){
+    if(cur!==u.pass) return err('La contrasenya actual no és correcta.');
+    if(np.length<4) return err('La nova contrasenya ha de tenir mínim 4 caràcters.');
+    if(np!==nc) return err('Les contrasenyes no coincideixen.');
+    u.pass=np;
+  }
+  u.name=name; u.email=email;
+  save(); render(); ok('✓ Perfil desat correctament.');
+}
 
 function resetDemo(){
   if(!confirm('Restaurar totes les dades de demostració? Es perdran els canvis.')) return;
