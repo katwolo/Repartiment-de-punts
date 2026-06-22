@@ -455,21 +455,11 @@ function renderLogin(err){
         <div class="field"><label>Correu electrònic</label><input id="li-email" type="email" placeholder="nom@institut.cat" autocomplete="username"></div>
         <div class="field"><label>Contrasenya</label><input id="li-pass" type="password" placeholder="••••" autocomplete="current-password"></div>
         <button class="btn btn-primary" onclick="doLogin()">Entrar</button>
-        <div class="demo-box">
-          <div class="t">Comptes de demostració · fes clic per entrar</div>
-          <div class="demo-grid">
-            <button class="demo-chip" onclick="quick('admin@institut.cat','admin')"><b>🛠️ Administració</b><small>admin@institut.cat</small></button>
-            <button class="demo-chip" onclick="quick('ivan@institut.cat','prof')"><b>👩‍🏫 Professorat</b><small>ivan@institut.cat</small></button>
-            <button class="demo-chip" onclick="quick('anna@alumnes.cat','1234')"><b>⭐ Coordinadora</b><small>anna@alumnes.cat</small></button>
-            <button class="demo-chip" onclick="quick('bru@alumnes.cat','1234')"><b>🎓 Alumnat</b><small>bru@alumnes.cat</small></button>
-          </div>
-        </div>
       </div>
     </div>
   </div>`;
   const ep=$('li-pass'); if(ep) ep.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 }
-function quick(email,pass){ $('li-email').value=email; $('li-pass').value=pass; doLogin(); }
 function doLogin(){
   const email=$('li-email').value.trim().toLowerCase();
   const pass=$('li-pass').value;
