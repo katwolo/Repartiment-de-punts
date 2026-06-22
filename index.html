@@ -312,8 +312,7 @@ function seed(){
   };
 }
 
-let state = GAS ? {users:[],groups:[]} : (localLoad() || seed());
-if(!state.groups) state = seed();
+let state = {users:[], groups:[]};
 
 /* ---------- HELPERS ---------- */
 const $ = s=>document.getElementById(s);
