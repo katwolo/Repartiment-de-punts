@@ -1,339 +1,1202 @@
 <!DOCTYPE html>
-<html>
+<html lang="ca">
 <head>
-  <base target="_top">
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone@7.22.17/babel.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-    .animate-fade-in { animation: fadeIn 0.5s ease-out; }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Repartiment de punts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FAF8F3;
+  --card:#FFFFFF;
+  --ink:#1C2128;
+  --ink-soft:#5A6470;
+  --line:#E8E2D6;
+  --line-strong:#D8D0BF;
+  --teal:#0E6B6B;
+  --teal-dk:#0A4F4F;
+  --teal-soft:#E3EFEE;
+  --coral:#F2603B;
+  --coral-soft:#FDEAE3;
+  --gold:#C98A1F;
+  --gold-soft:#FBF1DC;
+  --green:#2F8F5B;
+  --green-soft:#E4F2EA;
+  --red:#C0392B;
+  --red-soft:#FBE7E4;
+  --radius:16px;
+  --shadow:0 1px 2px rgba(28,33,40,.04),0 8px 24px rgba(28,33,40,.06);
+  --shadow-lg:0 12px 40px rgba(28,33,40,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:'Hanken Grotesk',system-ui,sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(1200px 600px at 100% -10%, var(--teal-soft) 0%, transparent 55%),
+    radial-gradient(900px 500px at -10% 110%, var(--gold-soft) 0%, transparent 50%),
+    var(--paper);
+  background-attachment:fixed;
+  -webkit-font-smoothing:antialiased;
+  line-height:1.5;
+}
+h1,h2,h3,h4,.brand,.display{font-family:'Bricolage Grotesque',sans-serif;letter-spacing:-.01em}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,select,textarea{font-family:inherit;font-size:15px}
+a{color:var(--teal)}
+.hidden{display:none!important}
+
+/* ---------- LOGIN ---------- */
+.login-wrap{min-height:100vh;display:grid;grid-template-columns:1.1fr 1fr}
+.login-hero{
+  background:linear-gradient(150deg,var(--teal-dk),var(--teal));
+  color:#fff;padding:64px 56px;display:flex;flex-direction:column;justify-content:space-between;
+  position:relative;overflow:hidden;
+}
+.login-hero::after{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(700px 400px at 80% 120%, rgba(242,96,59,.35), transparent 60%);
+}
+.login-hero > *{position:relative;z-index:1}
+.hero-logo{display:flex;align-items:center;gap:14px;font-family:'Bricolage Grotesque';font-weight:800;font-size:22px}
+.hero-logo .scale{width:42px;height:42px}
+.hero-mid h1{font-size:clamp(34px,4vw,52px);font-weight:800;line-height:1.02;margin-bottom:18px}
+.hero-mid p{font-size:17px;max-width:30ch;opacity:.9}
+.hero-feats{display:flex;flex-direction:column;gap:12px;margin-top:28px}
+.hero-feats div{display:flex;align-items:center;gap:10px;font-size:14.5px;opacity:.92}
+.hero-feats span{display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.16);font-size:13px}
+.hero-foot{font-size:13px;opacity:.7}
+.login-panel{display:flex;align-items:center;justify-content:center;padding:40px}
+.login-card{width:100%;max-width:380px}
+.login-card h2{font-size:26px;font-weight:700;margin-bottom:6px}
+.login-card .sub{color:var(--ink-soft);margin-bottom:26px;font-size:15px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--ink-soft);margin-bottom:6px}
+.field input,.field select,.field textarea{
+  width:100%;padding:12px 14px;border:1.5px solid var(--line-strong);border-radius:12px;background:#fff;color:var(--ink);transition:border .15s,box-shadow .15s;
+}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4px var(--teal-soft)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border-radius:12px;font-weight:700;font-size:15px;transition:transform .08s,filter .15s,background .15s}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--teal);color:#fff;width:100%}
+.btn-primary:hover{background:var(--teal-dk)}
+.btn-coral{background:var(--coral);color:#fff}
+.btn-coral:hover{filter:brightness(.95)}
+.btn-ghost{background:var(--card);color:var(--ink);border:1.5px solid var(--line-strong)}
+.btn-ghost:hover{border-color:var(--teal);color:var(--teal)}
+.btn-sm{padding:7px 12px;font-size:13px;border-radius:10px}
+.btn-danger{background:var(--red-soft);color:var(--red)}
+.btn-danger:hover{background:var(--red);color:#fff}
+.login-error{background:var(--red-soft);color:var(--red);padding:10px 12px;border-radius:10px;font-size:13.5px;margin-bottom:14px;font-weight:600}
+.demo-box{margin-top:26px;border-top:1px dashed var(--line-strong);padding-top:18px}
+.demo-box .t{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);margin-bottom:10px}
+.demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.demo-chip{text-align:left;padding:9px 11px;border:1.5px solid var(--line);border-radius:11px;background:var(--card);transition:.15s}
+.demo-chip:hover{border-color:var(--teal);background:var(--teal-soft)}
+.demo-chip b{display:block;font-size:13px;font-weight:700}
+.demo-chip small{font-size:11.5px;color:var(--ink-soft)}
+
+/* ---------- APP SHELL ---------- */
+.shell{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+.sidebar{background:#0E1518;color:#fff;padding:22px 16px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.side-brand{display:flex;align-items:center;gap:11px;padding:6px 8px 20px;font-family:'Bricolage Grotesque';font-weight:800;font-size:18px}
+.side-brand .scale{width:34px;height:34px}
+.nav{display:flex;flex-direction:column;gap:3px;margin-top:6px}
+.nav-section{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#6B7A80;padding:14px 12px 6px;font-weight:700}
+.nav-item{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:11px;color:#C4CDD1;font-size:14.5px;font-weight:600;text-align:left;width:100%;transition:.13s}
+.nav-item:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav-item.active{background:var(--teal);color:#fff}
+.nav-item .ic{font-size:17px;width:20px;text-align:center}
+.side-foot{margin-top:auto;border-top:1px solid rgba(255,255,255,.1);padding-top:14px}
+.side-user{display:flex;align-items:center;gap:11px;padding:6px 8px}
+.avatar{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:var(--coral);color:#fff;font-weight:800;font-size:15px;flex-shrink:0}
+.side-user .nm{font-size:14px;font-weight:700;line-height:1.2}
+.side-user .rl{font-size:11.5px;color:#8A969B}
+.logout{margin-top:10px;width:100%;color:#C4CDD1;font-size:13.5px;font-weight:600;padding:9px;border-radius:10px;text-align:left;display:flex;gap:9px;align-items:center}
+.logout:hover{background:rgba(192,57,43,.2);color:#fff}
+
+.main{padding:34px 40px 60px;max-width:1100px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:26px;flex-wrap:wrap}
+.page-head h1{font-size:30px;font-weight:800}
+.page-head .crumb{font-size:13px;color:var(--ink-soft);font-weight:600;margin-bottom:3px}
+.page-head .actions{display:flex;gap:10px}
+
+.role-banner{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;padding:5px 11px;border-radius:30px;margin-bottom:14px}
+.rb-admin{background:#211A2E;color:#D9C9FF}
+.rb-teacher{background:var(--teal-soft);color:var(--teal-dk)}
+.rb-coord{background:var(--coral-soft);color:var(--coral)}
+.rb-student{background:var(--gold-soft);color:var(--gold)}
+
+/* cards / grid */
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px}
+.card h3{font-size:17px;font-weight:700;margin-bottom:4px}
+.card .desc{color:var(--ink-soft);font-size:13.5px;margin-bottom:14px}
+.stat{display:flex;flex-direction:column;gap:2px}
+.stat .v{font-family:'Bricolage Grotesque';font-size:34px;font-weight:800;line-height:1}
+.stat .l{font-size:13px;color:var(--ink-soft);font-weight:600}
+.stat .ic{font-size:22px;margin-bottom:8px}
+
+.section-title{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin:30px 0 14px}
+
+/* tables / lists */
+.list{display:flex;flex-direction:column;gap:10px}
+.row-item{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow)}
+.row-item .grow{flex:1;min-width:0}
+.row-item .ttl{font-weight:700;font-size:15px}
+.row-item .meta{font-size:12.5px;color:var(--ink-soft)}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:20px}
+.tag-teal{background:var(--teal-soft);color:var(--teal-dk)}
+.tag-gold{background:var(--gold-soft);color:var(--gold)}
+.tag-coral{background:var(--coral-soft);color:var(--coral)}
+.tag-green{background:var(--green-soft);color:var(--green)}
+.tag-red{background:var(--red-soft);color:var(--red)}
+.tag-grey{background:#EEF0F2;color:var(--ink-soft)}
+
+.empty{text-align:center;padding:50px 20px;color:var(--ink-soft)}
+.empty .ic{font-size:40px;opacity:.5;margin-bottom:10px}
+
+/* tabs */
+.tabs{display:flex;gap:6px;border-bottom:1.5px solid var(--line);margin-bottom:22px;flex-wrap:wrap}
+.tab{padding:10px 16px;font-weight:700;font-size:14.5px;color:var(--ink-soft);border-bottom:2.5px solid transparent;margin-bottom:-1.5px;transition:.13s}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--teal);border-color:var(--teal)}
+
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(20,25,30,.5);backdrop-filter:blur(3px);display:grid;place-items:center;z-index:50;padding:20px}
+.modal{background:var(--card);border-radius:18px;box-shadow:var(--shadow-lg);width:100%;max-width:520px;max-height:88vh;overflow:auto;padding:28px}
+.modal.wide{max-width:680px}
+.modal h2{font-size:22px;font-weight:800;margin-bottom:4px}
+.modal .msub{color:var(--ink-soft);font-size:14px;margin-bottom:20px}
+.modal-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}
+
+/* chat */
+.chat-box{display:flex;flex-direction:column;height:460px}
+.chat-msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:4px 4px 10px}
+.msg{max-width:78%;padding:10px 13px;border-radius:14px;font-size:14px;background:#F1F3F2;align-self:flex-start}
+.msg.mine{align-self:flex-end;background:var(--teal);color:#fff}
+.msg .who{font-size:11.5px;font-weight:700;margin-bottom:3px;opacity:.85;display:flex;gap:7px;align-items:center}
+.msg .tm{font-size:10.5px;opacity:.6;margin-top:4px}
+.chat-input{display:flex;gap:10px;border-top:1px solid var(--line);padding-top:12px}
+.chat-input input{flex:1}
+
+/* eval grid */
+.evtable{width:100%;border-collapse:collapse;font-size:14px}
+.evtable th,.evtable td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--line)}
+.evtable th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);font-weight:700}
+.evtable td.num{font-weight:700;font-family:'Bricolage Grotesque'}
+.points-in{width:90px;text-align:center;font-weight:700;padding:8px}
+.budget-meter{display:flex;align-items:center;justify-content:space-between;background:var(--gold-soft);border:1px solid var(--gold);border-radius:12px;padding:12px 16px;margin:16px 0;font-weight:700}
+.budget-meter.ok{background:var(--green-soft);border-color:var(--green);color:var(--green)}
+.budget-meter.bad{color:var(--gold)}
+.crit-cell{display:flex;gap:5px}
+.crit-cell button{width:34px;height:34px;border-radius:9px;border:1.5px solid var(--line-strong);font-weight:700;background:#fff;color:var(--ink-soft)}
+.crit-cell button.sel{background:var(--teal);color:#fff;border-color:var(--teal)}
+.scale-legend{font-size:12.5px;color:var(--ink-soft);margin-bottom:14px}
+
+.bar{height:9px;background:#EEF0F2;border-radius:20px;overflow:hidden}
+.bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--green));border-radius:20px}
+
+.notice{padding:13px 16px;border-radius:12px;font-size:14px;margin-bottom:18px;display:flex;gap:10px;align-items:flex-start}
+.notice .ic{font-size:18px}
+.n-info{background:var(--teal-soft);color:var(--teal-dk)}
+.n-warn{background:var(--gold-soft);color:var(--gold)}
+.n-ok{background:var(--green-soft);color:var(--green)}
+
+.help{font-size:12.5px;color:var(--ink-soft);margin-top:5px}
+.inline-form{display:grid;gap:14px}
+.f-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.method-pick{display:grid;gap:12px}
+.method-opt{border:1.5px solid var(--line-strong);border-radius:14px;padding:16px;cursor:pointer;transition:.13s}
+.method-opt:hover{border-color:var(--teal)}
+.method-opt.sel{border-color:var(--teal);background:var(--teal-soft)}
+.method-opt b{font-size:15px;display:flex;align-items:center;gap:9px}
+.method-opt p{font-size:13px;color:var(--ink-soft);margin-top:5px}
+.method-opt .badge{font-size:11px;background:#fff;border:1px solid var(--line);padding:2px 8px;border-radius:20px;font-weight:700}
+
+@media (max-width:860px){
+  .login-wrap{grid-template-columns:1fr}
+  .login-hero{display:none}
+  .shell{grid-template-columns:1fr}
+  .sidebar{position:fixed;bottom:0;left:0;right:0;top:auto;height:auto;flex-direction:row;padding:8px;z-index:40;align-items:center;overflow-x:auto}
+  .side-brand,.nav-section,.side-foot .side-user .rl{display:none}
+  .nav{flex-direction:row;margin:0}
+  .nav-item .lbl{display:none}
+  .nav-item{padding:11px}
+  .side-foot{margin:0;border:none;padding:0}
+  .logout{width:auto}
+  .main{padding:20px 16px 90px}
+  .g2,.g3{grid-template-columns:1fr}
+  .f-row{grid-template-columns:1fr}
+}
+</style>
 </head>
 <body>
-  <div id="root"></div>
+<div id="root"></div>
 
-  <script type="text/babel" data-presets="react">
-    const { useState } = React;
+<script>
+/* ============================================================
+   REPARTIMENT DE PUNTS
+   App d'avaluació entre iguals per a treballs en grup.
+   Fitxer únic · sense dependències · llest per portar a GAS.
+   ============================================================ */
 
-    const IconAward = () => (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-          d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
-      </svg>
-    );
+const SCALE_SVG = `<svg class="scale" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M24 6v34" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+  <path d="M12 12h24" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="24" cy="7" r="3.4" fill="currentColor"/>
+  <path d="M12 12 6 24h12L12 12Z" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M36 12 30 24h12l-6-12Z" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M17 40h14" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+</svg>`;
 
-    const IconChart = () => (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-      </svg>
-    );
+/* ---------- ESTAT / EMMAGATZEMATGE ----------
+   Si s'executa dins de Google Apps Script (GAS), les dades es desen a la
+   FULL DE CÀLCUL VINCULADA mitjançant google.script.run. Si s'obre el
+   fitxer en local (sense GAS), fa servir localStorage com a alternativa.
+*/
+const GAS = (typeof google!=='undefined' && google.script && google.script.run);
+let SESSION = null;   // usuari amb sessió iniciada (només al client, no es desa)
 
-    function App() {
-      const [view, setView]               = useState('home');
-      const [loading, setLoading]         = useState(false);
-      const [error, setError]             = useState('');
-      const [session, setSession]         = useState(null);
-      const [sessionId, setSessionId]     = useState('');
+const KEY = 'rdp_state_v1';
+let MEM = null;
+function localLoad(){
+  try{ const raw=localStorage.getItem(KEY); if(raw) return JSON.parse(raw); }catch(e){ if(MEM) return MEM; }
+  return null;
+}
+function localSave(){
+  try{ localStorage.setItem(KEY, JSON.stringify({users:state.users,groups:state.groups})); }catch(e){ MEM=state; }
+}
 
-      // Formulari de creació
-      const [profEmail, setProfEmail]     = useState('');
-      const [baseGrade, setBaseGrade]     = useState('');
-      const [members, setMembers]         = useState([{ name: '', email: '' }, { name: '', email: '' }]);
-      const [mode, setMode]               = useState(null);
+/* persistència de configuració (usuaris, grups, tasques) */
+function save(){
+  if(GAS){ google.script.run.withSuccessHandler(syncState).withFailureHandler(persistErr)
+            .saveStateBulk(JSON.stringify({users:state.users, groups:state.groups})); }
+  else { localSave(); }
+}
+function syncState(s){ if(s && s.groups){ state=s; render(); } }
+function persistErr(e){ console.error('Error desant:', e); }
+function refreshNow(){ if(GAS) google.script.run.withSuccessHandler(syncState).loadState(); }
 
-      // Formulari de votació
-      const [voterName, setVoterName]         = useState('');
-      const [myVotes, setMyVotes]             = useState({});
-      const [myJustification, setMyJustification] = useState('');
+function seed(){
+  return {
+    users:[
+      {id:'u_admin', name:'Direcció Centre', email:'admin@institut.cat', pass:'admin', role:'admin', classe:''},
+      {id:'u_prof',  name:'Iván (Professor)', email:'ivan@institut.cat',  pass:'prof',  role:'teacher', classe:''},
+      {id:'u_prof2', name:'Marta Roca',        email:'marta@institut.cat', pass:'prof',  role:'teacher', classe:''},
+      {id:'u_s1', name:'Anna Ferrer',  email:'anna@alumnes.cat',  pass:'1234', role:'student', classe:'A'},
+      {id:'u_s2', name:'Bru Soler',    email:'bru@alumnes.cat',   pass:'1234', role:'student', classe:'A'},
+      {id:'u_s3', name:'Carla Vidal',  email:'carla@alumnes.cat', pass:'1234', role:'student', classe:'A'},
+      {id:'u_s4', name:'Dani Pons',    email:'dani@alumnes.cat',  pass:'1234', role:'student', classe:'A'},
+      {id:'u_s5', name:'Èlia Mas',     email:'elia@alumnes.cat',  pass:'1234', role:'student', classe:'B'},
+      {id:'u_s6', name:'Pol Roig',     email:'pol@alumnes.cat',   pass:'1234', role:'student', classe:'B'},
+    ],
+    groups:[
+      {
+        id:'g1', name:'Grup A · Investigació de mercat', subject:'Empresa i emprenedoria',
+        teacherId:'u_prof', coordinatorId:'u_s1', memberIds:['u_s1','u_s2','u_s3','u_s4'],
+        grade:8.0, method:1, evalActive:true, resultsPublished:false,
+        tasks:[
+          {id:'t1', title:'Dissenyar i llançar l\'enquesta', desc:'Crear el formulari i difondre\'l', points:35, assignedTo:'u_s1', status:'done'},
+          {id:'t2', title:'Redactar el marc teòric', desc:'Fonamentació de la recerca', points:25, assignedTo:'u_s2', status:'done'},
+          {id:'t3', title:'Analitzar dades i gràfics', desc:'Tractament estadístic', points:30, assignedTo:'u_s3', status:'partial'},
+          {id:'t4', title:'Format, ortografia i conclusions', desc:'Revisió final', points:10, assignedTo:'u_s4', status:'pending'},
+        ],
+        messages:[
+          {userId:'u_s1', text:'Hola equip! He activat la valoració amb el mètode del pressupost. Quan pugueu, repartiu els punts.', ts:Date.now()-3600000},
+          {userId:'u_s2', text:'Fet! Bona feina amb l\'enquesta 👍', ts:Date.now()-1800000},
+        ],
+        evalData:{ m1:{}, m3:{} }
+      },
+      {
+        id:'g2', name:'Grup B · Sessió d\'aquagym', subject:'Activitats aquàtiques',
+        teacherId:'u_prof', coordinatorId:'u_s5', memberIds:['u_s5','u_s6'],
+        grade:null, method:null, evalActive:false, resultsPublished:false,
+        tasks:[], messages:[], evalData:{ m1:{}, m3:{} }
+      }
+    ]
+  };
+}
 
-      const selectMode = (m) => { setMode(m); setError(''); setView('setup'); };
+let state = GAS ? {users:[],groups:[]} : (localLoad() || seed());
+if(!state.groups) state = seed();
 
-      // ---- Handlers --------------------------------------------------------
+/* ---------- HELPERS ---------- */
+const $ = s=>document.getElementById(s);
+const root = $('root');
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmt(n){ return (Math.round(n*10)/10).toFixed(1); }
+function initials(name){ return name.split(' ').filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join(''); }
+function userById(id){ return state.users.find(u=>u.id===id); }
+function groupById(id){ return state.groups.find(g=>g.id===id); }
+function me(){ return userById(SESSION); }
+function timeAgo(ts){
+  const d=Date.now()-ts, m=Math.floor(d/60000);
+  if(m<1) return 'ara mateix'; if(m<60) return m+' min';
+  const h=Math.floor(m/60); if(h<24) return h+' h'; return Math.floor(h/24)+' d';
+}
+const METHODS={
+  1:{name:'Pressupost fix de punts', short:'Coavaluació quantitativa', ic:'🪙'},
+  2:{name:'Barem per fites i pes de tasques', short:'Sistema àgil', ic:'🎯'},
+  3:{name:'Matriu de rúbrica interna creuada', short:'Quali-quantitativa', ic:'📐'}
+};
+const CRITERIA=['Puntualitat','Qualitat','Iniciativa','Comunicació'];
 
-      const createSession = () => {
-        if (!profEmail || members.some(m => !m.name || !m.email)) {
-          setError('Falten dades dels alumnes o l\'email del professor.');
-          return;
-        }
-        setError('');
-        setLoading(true);
-        google.script.run
-          .withSuccessHandler((res) => {
-            setSession(res);
-            setSessionId(res.id);
-            setView('created');
-            setLoading(false);
-          })
-          .withFailureHandler((err) => {
-            setError(err.message || 'Error en crear la sessió.');
-            setLoading(false);
-          })
-          .createNewSession({ mode, profEmail, baseGrade, members });
-      };
+/* role del usuari dins d'un grup concret */
+function roleInGroup(uid, g){
+  if(g.coordinatorId===uid) return 'coordinator';
+  if(g.memberIds.includes(uid)) return 'student';
+  return null;
+}
 
-      const loadSession = (id) => {
-        const trimmed = (id || '').trim();
-        if (!trimmed) { setError('Introdueix un codi de sessió.'); return; }
-        setError('');
-        setLoading(true);
-        google.script.run
-          .withSuccessHandler((res) => {
-            if (res) {
-              setSession(res);
-              setSessionId(trimmed);
-              setView('vote');
-            } else {
-              setError('Sessió no trobada. Comprova el codi.');
-            }
-            setLoading(false);
-          })
-          .withFailureHandler((err) => {
-            setError(err.message || 'Error en carregar la sessió.');
-            setLoading(false);
-          })
-          .getSessionData(trimmed);
-      };
+/* ============================================================
+   CÀLCUL DE RESULTATS PER MÈTODE
+   ============================================================ */
+function results(g){
+  const members=g.memberIds.map(userById);
+  const N=members.length, base=g.grade;
+  const out=members.map(m=>({id:m.id,name:m.name,factor:null,final:null,detail:''}));
 
-      const submitVote = () => {
-        if (!voterName) { setError('Selecciona qui ets abans de votar.'); return; }
-        setError('');
-        setLoading(true);
-        google.script.run
-          .withSuccessHandler(() => { setLoading(false); setView('thanks'); })
-          .withFailureHandler((err) => { setError(err.message); setLoading(false); })
-          .submitUserVote({ sessionId, voterName, scores: myVotes, justification: myJustification });
-      };
+  if(g.method===1){
+    const subs=g.evalData.m1||{};
+    const evaluators=Object.keys(subs);
+    out.forEach(o=>{
+      const recv=evaluators.map(ev=>subs[ev][o.id]).filter(v=>typeof v==='number');
+      if(recv.length){
+        const avg=recv.reduce((a,b)=>a+b,0)/recv.length;
+        o.factor=avg/100;
+        o.recv=avg;
+        o.detail=fmt(avg)+' pts (factor '+(Math.round(o.factor*100)/100)+')';
+        if(base!=null) o.final=Math.max(0,Math.min(10, base*o.factor));
+      }
+    });
+    out.evaluatorsCount=evaluators.length;
+  }
+  else if(g.method===3){
+    const subs=g.evalData.m3||{};
+    const evaluators=Object.keys(subs);
+    out.forEach(o=>{
+      let recv=0, nEval=0;
+      evaluators.forEach(ev=>{
+        if(ev===o.id) return;
+        const arr=subs[ev] && subs[ev][o.id];
+        if(arr){ recv+=arr.reduce((a,b)=>a+b,0); nEval++; }
+      });
+      if(nEval){
+        const max=nEval*CRITERIA.length*4;
+        o.factor=recv/max;
+        o.detail=recv+'/'+max+' pts · '+Math.round(o.factor*100)+'%';
+        if(base!=null) o.final=Math.max(0,Math.min(10, base*o.factor));
+      }
+    });
+    out.evaluatorsCount=evaluators.length;
+  }
+  else if(g.method===2){
+    const total=g.tasks.reduce((a,t)=>a+t.points,0);
+    const ideal=N? total/N : 0;
+    const sf={done:1,partial:.5,pending:0};
+    out.forEach(o=>{
+      const earned=g.tasks.filter(t=>t.assignedTo===o.id).reduce((a,t)=>a+t.points*sf[t.status],0);
+      o.earned=earned;
+      o.factor= ideal? Math.min(1, earned/ideal) : 0;
+      o.detail=fmt(earned)+'/'+fmt(ideal)+' pts d\'esforç';
+      if(base!=null) o.final=Math.max(0,Math.min(10, base*o.factor));
+    });
+    out.ideal=ideal; out.total=total;
+  }
+  return out;
+}
+function evalProgress(g){
+  if(g.method===1) return Object.keys(g.evalData.m1||{}).length;
+  if(g.method===3) return Object.keys(g.evalData.m3||{}).length;
+  return null;
+}
 
-      const updateMember = (i, field, value) => {
-        const updated = [...members];
-        updated[i][field] = value;
-        setMembers(updated);
-      };
+/* ============================================================
+   ROUTING + RENDER
+   ============================================================ */
+let view='home', ctx={};
+function go(v, c={}){ view=v; ctx={...ctx,...c}; render(); }
 
-      const removeMember = (i) => setMembers(members.filter((_, j) => j !== i));
+function render(){
+  if(!SESSION){ renderLogin(); return; }
+  const u=me();
+  if(!u){ SESSION=null; renderLogin(); return; }
+  renderShell(u);
+}
 
-      // ---- Shared components -----------------------------------------------
-
-      const ErrorMsg = () => error
-        ? <p className="text-red-500 text-sm mt-3 p-3 bg-red-50 rounded-xl">{error}</p>
-        : null;
-
-      // ---- Views -----------------------------------------------------------
-
-      if (view === 'home') return (
-        <div className="flex flex-col items-center justify-center min-h-screen p-6 animate-fade-in text-center">
-          <h1 className="text-4xl font-extrabold text-slate-900 mb-2">Coevaluació</h1>
-          <p className="text-slate-500 mb-12">Selecciona el mètode per al teu equip</p>
-
-          <div className="grid md:grid-cols-2 gap-6 w-full max-w-2xl mb-12">
-            <button onClick={() => selectMode('bolsa')}
-              className="bg-white p-8 rounded-[32px] border-2 hover:border-blue-500 text-left group transition-all shadow-sm">
-              <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <IconAward />
-              </div>
-              <b className="text-xl block">Borsa de Punts</b>
-              <p className="text-sm text-slate-400 mt-2">Repartiment de la nota total entre integrants.</p>
-            </button>
-
-            <button onClick={() => selectMode('coeficient')}
-              className="bg-white p-8 rounded-[32px] border-2 hover:border-emerald-500 text-left group transition-all shadow-sm">
-              <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <IconChart />
-              </div>
-              <b className="text-xl block">Coeficients</b>
-              <p className="text-sm text-slate-400 mt-2">Multiplicadors individuals d'esforç.</p>
-            </button>
-          </div>
-
-          <div className="bg-white p-4 rounded-2xl shadow-sm border w-full max-w-md">
-            <p className="text-sm text-slate-500 mb-3 font-medium">Ja tens un codi? Entra a votar</p>
-            <input
-              type="text"
-              placeholder="Codi de sessió..."
-              className="w-full p-3 bg-slate-50 rounded-xl mb-3 border text-center uppercase font-mono"
-              onChange={e => { setSessionId(e.target.value); setError(''); }}
-            />
-            <button
-              onClick={() => loadSession(sessionId)}
-              disabled={loading}
-              className="w-full bg-slate-900 text-white p-3 rounded-xl font-bold disabled:opacity-50">
-              {loading ? 'Carregant...' : 'Entrar a Votar'}
-            </button>
-            <ErrorMsg />
-          </div>
+/* ---------- LOGIN ---------- */
+function renderLogin(err){
+  root.innerHTML=`
+  <div class="login-wrap">
+    <div class="login-hero">
+      <div class="hero-logo">${SCALE_SVG}<span>Repartiment de punts</span></div>
+      <div class="hero-mid">
+        <h1>Notes de grup<br>justes i objectives.</h1>
+        <p>L'alumnat participa en la valoració del seu propi equip. Tres mètodes contrastats, votació anònima i càlcul automàtic.</p>
+        <div class="hero-feats">
+          <div><span>🪙</span> Pressupost fix de punts</div>
+          <div><span>🎯</span> Barem per fites i tasques</div>
+          <div><span>📐</span> Rúbrica interna creuada</div>
         </div>
-      );
-
-      if (view === 'setup') return (
-        <div className="max-w-2xl mx-auto p-6 py-12 animate-fade-in">
-          <div className="bg-white p-8 rounded-[40px] shadow-sm border">
-            <button onClick={() => setView('home')} className="text-slate-400 text-sm mb-6 block">← Tornar</button>
-            <h2 className="text-2xl font-bold mb-6">
-              Configurar Equip — <span className="text-blue-600">{mode}</span>
-            </h2>
-
-            <div className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-4">
-                <input
-                  type="email"
-                  placeholder="Email del Professor"
-                  className="p-4 rounded-2xl border focus:outline-none focus:ring-2 focus:ring-blue-300"
-                  onChange={e => setProfEmail(e.target.value)}
-                />
-                {mode === 'bolsa' && (
-                  <input
-                    type="number"
-                    min="0" max="10" step="0.1"
-                    placeholder="Nota del Professor (0–10)"
-                    className="p-4 rounded-2xl border bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300"
-                    onChange={e => setBaseGrade(e.target.value)}
-                  />
-                )}
-              </div>
-
-              <div className="space-y-3">
-                {members.map((m, i) => (
-                  <div key={i} className="flex gap-2 items-center">
-                    <input
-                      placeholder="Nom"
-                      value={m.name}
-                      className="flex-1 p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-300"
-                      onChange={e => updateMember(i, 'name', e.target.value)}
-                    />
-                    <input
-                      placeholder="Email alumne"
-                      value={m.email}
-                      className="flex-1 p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-300"
-                      onChange={e => updateMember(i, 'email', e.target.value)}
-                    />
-                    {members.length > 2 && (
-                      <button
-                        onClick={() => removeMember(i)}
-                        className="text-red-400 font-bold px-2 hover:text-red-600">✕</button>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={() => setMembers([...members, { name: '', email: '' }])}
-                className="text-blue-600 font-bold text-sm">
-                + Afegir alumne
-              </button>
-
-              <ErrorMsg />
-
-              <button
-                onClick={createSession}
-                disabled={loading}
-                className="w-full bg-blue-600 text-white p-5 rounded-[24px] font-bold disabled:opacity-50 hover:bg-blue-700 transition-colors">
-                {loading ? 'Creant sessió...' : 'Activar i Enviar Emails'}
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-
-      if (view === 'vote') return (
-        <div className="max-w-md mx-auto p-6 py-12 animate-fade-in">
-          <h2 className="text-2xl font-bold mb-2">Votació</h2>
-          <p className="text-slate-500 text-sm mb-8">Mètode: <b>{session.mode}</b></p>
-
-          <select
-            className="w-full p-4 rounded-xl border mb-8 bg-white focus:outline-none focus:ring-2 focus:ring-slate-300"
-            onChange={e => { setVoterName(e.target.value); setError(''); }}>
-            <option value="">¿Qui ets?</option>
-            {session.members.map((m, i) => (
-              <option key={i} value={m.name}>{m.name}</option>
-            ))}
-          </select>
-
-          <div className="space-y-4 mb-8">
-            {session.mode === 'bolsa' && (
-              <p className="text-sm font-bold text-blue-600">
-                Borsa total: {(parseFloat(session.baseGrade || 0) * session.members.length).toFixed(1)} punts
-              </p>
-            )}
-            {session.members.map((m, i) => (
-              <div key={i} className="flex items-center justify-between p-4 bg-white rounded-2xl border shadow-sm">
-                <span className="font-bold">{m.name}</span>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  placeholder={session.mode === 'bolsa' ? '0' : '1.0'}
-                  className="w-20 p-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:ring-slate-300"
-                  onChange={e => {
-                    const v = { ...myVotes };
-                    v[m.name] = e.target.value;
-                    setMyVotes(v);
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-
-          <textarea
-            className="w-full p-4 rounded-xl border mb-4 h-24 focus:outline-none focus:ring-2 focus:ring-slate-300"
-            placeholder="Justificació (Opcional)"
-            onChange={e => setMyJustification(e.target.value)}>
-          </textarea>
-
-          <ErrorMsg />
-
-          <button
-            onClick={submitVote}
-            disabled={loading || !voterName}
-            className="w-full bg-slate-900 text-white p-4 rounded-xl font-bold mt-4 disabled:opacity-50 hover:bg-slate-700 transition-colors">
-            {loading ? 'Enviant...' : 'Confirmar Votació'}
-          </button>
-        </div>
-      );
-
-      if (view === 'thanks') return (
-        <div className="max-w-md mx-auto p-6 py-24 text-center animate-fade-in">
-          <div className="text-5xl mb-6">✓</div>
-          <h2 className="text-3xl font-bold mb-4">Votat!</h2>
-          <p className="text-slate-500 font-medium leading-relaxed">
-            La teva valoració s'ha guardat correctament.<br/>
-            El professor rebrà l'informe quan tots hagin acabat.
-          </p>
-        </div>
-      );
-
-      if (view === 'created') return (
-        <div className="max-w-md mx-auto p-6 py-24 text-center animate-fade-in">
-          <div className="bg-white p-8 rounded-[40px] shadow-sm border">
-            <div className="text-4xl mb-4">🎉</div>
-            <h2 className="text-2xl font-bold mb-4">Sessió Activada!</h2>
-            <p className="text-slate-400 mb-8">
-              Els alumnes han rebut un email amb l'accés. Comparteix també el codi:
-            </p>
-            <div className="text-4xl font-black text-blue-600 bg-blue-50 p-6 rounded-2xl mb-8 tracking-widest uppercase">
-              {sessionId}
-            </div>
-            <button
-              onClick={() => setView('home')}
-              className="text-slate-400 font-bold hover:text-slate-600">
-              Tornar a l'inici
-            </button>
+      </div>
+      <div class="hero-foot">Centre de Cicles Formatius · Activitats Físiques i Esportives</div>
+    </div>
+    <div class="login-panel">
+      <div class="login-card">
+        <h2>Inicia sessió</h2>
+        <p class="sub">Accedeix amb el teu correu corporatiu.</p>
+        ${err?`<div class="login-error">${esc(err)}</div>`:''}
+        <div class="field"><label>Correu electrònic</label><input id="li-email" type="email" placeholder="nom@institut.cat" autocomplete="username"></div>
+        <div class="field"><label>Contrasenya</label><input id="li-pass" type="password" placeholder="••••" autocomplete="current-password"></div>
+        <button class="btn btn-primary" onclick="doLogin()">Entrar</button>
+        <div class="demo-box">
+          <div class="t">Comptes de demostració · fes clic per entrar</div>
+          <div class="demo-grid">
+            <button class="demo-chip" onclick="quick('admin@institut.cat','admin')"><b>🛠️ Administració</b><small>admin@institut.cat</small></button>
+            <button class="demo-chip" onclick="quick('ivan@institut.cat','prof')"><b>👩‍🏫 Professorat</b><small>ivan@institut.cat</small></button>
+            <button class="demo-chip" onclick="quick('anna@alumnes.cat','1234')"><b>⭐ Coordinadora</b><small>anna@alumnes.cat</small></button>
+            <button class="demo-chip" onclick="quick('bru@alumnes.cat','1234')"><b>🎓 Alumnat</b><small>bru@alumnes.cat</small></button>
           </div>
         </div>
-      );
+      </div>
+    </div>
+  </div>`;
+  const ep=$('li-pass'); if(ep) ep.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+}
+function quick(email,pass){ $('li-email').value=email; $('li-pass').value=pass; doLogin(); }
+function doLogin(){
+  const email=$('li-email').value.trim().toLowerCase();
+  const pass=$('li-pass').value;
+  const u=state.users.find(x=>x.email.toLowerCase()===email && x.pass===pass);
+  if(!u){ renderLogin('Credencials incorrectes. Revisa el correu i la contrasenya.'); return; }
+  SESSION=u.id; view='home'; ctx={}; render();
+}
+function logout(){ SESSION=null; view='home'; ctx={}; render(); }
 
-      return null;
-    }
+/* ---------- SHELL ---------- */
+function navFor(role){
+  if(role==='admin') return [
+    ['home','📊','Tauler'],['users','👥','Usuaris'],['groups','📁','Tots els grups']
+  ];
+  if(role==='teacher') return [
+    ['home','📊','Tauler'],['groups','📁','Els meus grups']
+  ];
+  return [['home','📊','Els meus grups']];
+}
+function renderShell(u){
+  const items=navFor(u.role);
+  const roleLbl={admin:'Administració',teacher:'Professorat',student:'Alumnat'}[u.role];
+  root.innerHTML=`
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="side-brand">${SCALE_SVG}<span>Repartiment</span></div>
+      <nav class="nav">
+        ${items.map(([v,ic,lbl])=>`<button class="nav-item ${view===v||(v==='groups'&&view==='group')?'active':''}" onclick="go('${v}')"><span class="ic">${ic}</span><span class="lbl">${lbl}</span></button>`).join('')}
+      </nav>
+      <div class="side-foot">
+        <div class="side-user">
+          <div class="avatar">${initials(u.name)}</div>
+          <div><div class="nm">${esc(u.name.split(' ')[0])}</div><div class="rl">${roleLbl}</div></div>
+        </div>
+        <button class="logout" onclick="logout()"><span>↪</span> Tanca la sessió</button>
+      </div>
+    </aside>
+    <main class="main" id="main"></main>
+  </div>`;
+  renderMain(u);
+}
+function renderMain(u){
+  const m=$('main');
+  if(view==='users') return renderUsers(m);
+  if(view==='groups') return renderGroups(m,u);
+  if(view==='group') return renderGroup(m,u);
+  return renderHome(m,u);
+}
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
-  </script>
+/* ============================================================
+   HOME
+   ============================================================ */
+function renderHome(m,u){
+  if(u.role==='admin'){
+    const nStud=state.users.filter(x=>x.role==='student').length;
+    const nProf=state.users.filter(x=>x.role==='teacher').length;
+    const active=state.groups.filter(g=>g.evalActive).length;
+    m.innerHTML=`
+      <div class="page-head"><div><div class="crumb">Administració</div><h1>Tauler general</h1></div>
+        <div class="actions"><button class="btn btn-ghost btn-sm" onclick="resetDemo()">↺ Restaurar demo</button></div></div>
+      <div class="grid g3">
+        ${stat('📁',state.groups.length,'Grups actius')}
+        ${stat('🎓',nStud,'Alumnes')}
+        ${stat('👩‍🏫',nProf,'Professorat')}
+      </div>
+      <div class="section-title">Estat de les avaluacions</div>
+      <div class="list">${state.groups.map(g=>groupRow(g,u)).join('')}</div>`;
+    return;
+  }
+  if(u.role==='teacher'){
+    const mine=state.groups.filter(g=>g.teacherId===u.id);
+    m.innerHTML=`
+      <div class="page-head"><div><div class="crumb">Professorat</div><h1>Hola, ${esc(u.name.split(' ')[0])} 👋</h1></div>
+        <div class="actions"><button class="btn btn-ghost" onclick="importModal()">⇪ Importar alumnat</button><button class="btn btn-coral" onclick="newGroupModal()">+ Nou grup</button></div></div>
+      <div class="grid g3">
+        ${stat('📁',mine.length,'Els meus grups')}
+        ${stat('⏳',mine.filter(g=>g.evalActive).length,'Valoracions obertes')}
+        ${stat('✅',mine.filter(g=>g.resultsPublished).length,'Resultats publicats')}
+      </div>
+      <div class="section-title">Els meus grups</div>
+      <div class="list">${mine.length?mine.map(g=>groupRow(g,u)).join(''):emptyBox('Encara no tens cap grup. Crea\'n un per començar.')}</div>`;
+    return;
+  }
+  // student / coordinator
+  const mine=state.groups.filter(g=>g.memberIds.includes(u.id));
+  m.innerHTML=`
+    <div class="page-head"><div><div class="crumb">Alumnat</div><h1>Els meus grups</h1></div></div>
+    <div class="list">${mine.length?mine.map(g=>groupRow(g,u)).join(''):emptyBox('Encara no estàs assignat a cap grup.')}</div>`;
+}
+function stat(ic,v,l){ return `<div class="card stat"><div class="ic">${ic}</div><div class="v">${v}</div><div class="l">${l}</div></div>`; }
+function emptyBox(t){ return `<div class="empty"><div class="ic">🗂️</div>${esc(t)}</div>`; }
+
+function groupRow(g,u){
+  const r=roleInGroup(u.id,g);
+  let badge='';
+  if(r==='coordinator') badge='<span class="tag tag-coral">⭐ Ets coordinador/a</span>';
+  else if(r==='student') badge='<span class="tag tag-gold">🎓 Membre</span>';
+  let st = g.evalActive
+    ? '<span class="tag tag-green">● Valoració oberta</span>'
+    : (g.method? '<span class="tag tag-grey">Valoració tancada</span>':'<span class="tag tag-grey">Sense configurar</span>');
+  const coord=userById(g.coordinatorId);
+  const cls=[...new Set(g.memberIds.map(id=>{const x=userById(id);return x?x.classe:'';}).filter(Boolean))];
+  const clsTag = cls.length===1?`<span class="tag tag-grey">Classe ${esc(cls[0])}</span>`:'';
+  return `<div class="row-item" onclick="go('group',{gid:'${g.id}'})" style="cursor:pointer">
+    <div class="avatar" style="background:var(--teal)">${esc((g.name.match(/Grup\\s*([A-Z])/)||[,'·'])[1])}</div>
+    <div class="grow">
+      <div class="ttl">${esc(g.name)}</div>
+      <div class="meta">${esc(g.subject)} · ${g.memberIds.length} membres · Coord: ${esc(coord?coord.name.split(' ')[0]:'—')} ${g.grade!=null?' · Nota base: '+fmt(g.grade):''}</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">${clsTag} ${badge} ${st} ${g.method?`<span class="tag tag-teal">${METHODS[g.method].ic} Mètode ${g.method}</span>`:''}</div>
+  </div>`;
+}
+
+/* classes existents entre l'alumnat */
+function classesOf(){ return [...new Set(state.users.filter(u=>u.role==='student'&&u.classe).map(u=>u.classe))].sort(); }
+let userFilter='';
+
+/* ============================================================
+   ADMIN · USUARIS
+   ============================================================ */
+function renderUsers(m){
+  const classes=classesOf();
+  const list=state.users.filter(u=> !userFilter || (u.role==='student'&&u.classe===userFilter));
+  m.innerHTML=`
+    <div class="page-head"><div><div class="crumb">Administració</div><h1>Gestió d'usuaris</h1></div>
+      <div class="actions">
+        <button class="btn btn-ghost" onclick="importModal()">⇪ Importar alumnat</button>
+        <button class="btn btn-coral" onclick="userModal()">+ Nou usuari</button>
+      </div></div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+      <span style="font-size:13px;font-weight:600;color:var(--ink-soft)">Filtrar:</span>
+      <button class="btn btn-sm ${userFilter===''?'btn-primary':'btn-ghost'}" onclick="setUserFilter('')">Tots (${state.users.length})</button>
+      ${classes.map(c=>`<button class="btn btn-sm ${userFilter===c?'btn-primary':'btn-ghost'}" onclick="setUserFilter('${esc(c)}')">Classe ${esc(c)}</button>`).join('')}
+    </div>
+    <div class="list">${list.map(u=>{
+      const rl={admin:['tag-coral','🛠️ Admin'],teacher:['tag-teal','👩‍🏫 Professorat'],student:['tag-gold','🎓 Alumnat']}[u.role];
+      return `<div class="row-item">
+        <div class="avatar">${initials(u.name)}</div>
+        <div class="grow"><div class="ttl">${esc(u.name)}</div><div class="meta">${esc(u.email)}</div></div>
+        ${u.role==='student'&&u.classe?`<span class="tag tag-grey">Classe ${esc(u.classe)}</span>`:''}
+        <span class="tag ${rl[0]}">${rl[1]}</span>
+        <button class="btn btn-ghost btn-sm" onclick="userModal('${u.id}')">Editar</button>
+        ${u.id!=='u_admin'?`<button class="btn btn-sm btn-danger" onclick="delUser('${u.id}')">Esborrar</button>`:''}
+      </div>`;
+    }).join('')}</div>`;
+}
+function setUserFilter(c){ userFilter=c; render(); }
+function userModal(id){
+  const u=id?userById(id):null;
+  openModal(`
+    <h2>${u?'Editar usuari':'Nou usuari'}</h2><div class="msub">Dades del compte i rol d'accés.</div>
+    <div class="inline-form">
+      <div class="field"><label>Nom complet</label><input id="uf-name" value="${u?esc(u.name):''}"></div>
+      <div class="field"><label>Correu corporatiu</label><input id="uf-email" value="${u?esc(u.email):''}"></div>
+      <div class="f-row">
+        <div class="field"><label>Contrasenya</label><input id="uf-pass" value="${u?esc(u.pass):''}"></div>
+        <div class="field"><label>Rol</label><select id="uf-role" onchange="document.getElementById('uf-classwrap').style.display=this.value==='student'?'block':'none'">
+          <option value="student" ${u&&u.role==='student'?'selected':''}>Alumnat</option>
+          <option value="teacher" ${u&&u.role==='teacher'?'selected':''}>Professorat</option>
+          <option value="admin" ${u&&u.role==='admin'?'selected':''}>Administració</option>
+        </select></div>
+      </div>
+      <div class="field" id="uf-classwrap" style="display:${(!u||u.role==='student')?'block':'none'}"><label>Classe</label>
+        <input id="uf-class" list="uf-cls" value="${u?esc(u.classe||''):''}" placeholder="A, B, C...">
+        <datalist id="uf-cls">${classesOf().map(c=>`<option>${esc(c)}</option>`).join('')}</datalist></div>
+      <div class="help">El rol de <b>coordinador/a</b> no s'assigna aquí: el professorat el designa dins de cada grup, entre l'alumnat.</div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel·la</button>
+      <button class="btn btn-primary btn-sm" style="width:auto" onclick="saveUser('${id||''}')">Desar</button></div>`);
+}
+function saveUser(id){
+  const name=$('uf-name').value.trim(), email=$('uf-email').value.trim(), pass=$('uf-pass').value.trim(), role=$('uf-role').value;
+  const classe = role==='student' ? ($('uf-class').value.trim()) : '';
+  if(!name||!email||!pass){ alert('Omple tots els camps.'); return; }
+  if(id){ const u=userById(id); Object.assign(u,{name,email,pass,role,classe}); }
+  else { state.users.push({id:'u_'+Date.now(),name,email,pass,role,classe}); }
+  save(); closeModal(); render();
+}
+function delUser(id){
+  if(!confirm('Esborrar aquest usuari? També se\'l treurà dels grups.')) return;
+  state.users=state.users.filter(u=>u.id!==id);
+  state.groups.forEach(g=>{ g.memberIds=g.memberIds.filter(x=>x!==id); if(g.coordinatorId===id)g.coordinatorId=null; });
+  save(); render();
+}
+
+/* ---------- IMPORTACIÓ MASSIVA D'ALUMNAT ---------- */
+function importModal(){
+  openModal(`
+    <h2>⇪ Importar alumnat</h2>
+    <div class="msub">Enganxa la llista (un alumne per línia). Pots copiar columnes directament d'un full de càlcul.</div>
+    <div class="inline-form">
+      <div class="f-row">
+        <div class="field"><label>Classe</label>
+          <input id="im-class" list="im-cls" value="A" placeholder="A, B, C...">
+          <datalist id="im-cls"><option>A</option><option>B</option><option>C</option>${classesOf().map(c=>`<option>${esc(c)}</option>`).join('')}</datalist></div>
+        <div class="field"><label>Contrasenya per defecte</label><input id="im-pass" value="1234"></div>
+      </div>
+      <div class="field"><label>Domini per als correus automàtics</label><input id="im-domain" value="alumnes.cat">
+        <div class="help">Només s'utilitza per a les línies que no porten correu.</div></div>
+      <div class="field"><label>Llista</label>
+        <textarea id="im-data" rows="8" placeholder="Anna Ferrer, anna@alumnes.cat&#10;Bru Soler; bru@alumnes.cat&#10;Carla Vidal"></textarea>
+        <div class="help">Per línia: <b>Nom, correu</b> · o només <b>Nom</b> (es genera el correu). Accepta comes, punts i comes o tabuladors com a separador.</div></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel·la</button>
+      <button class="btn btn-primary btn-sm" style="width:auto" onclick="doImport()">Importar</button></div>`,'wide');
+}
+function slugEmail(name,domain){
+  const base=name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9\s]/g,'').trim().split(/\s+/).join('.');
+  return (base||'alumne')+'@'+domain;
+}
+function doImport(){
+  const cls=$('im-class').value.trim();
+  const pass=$('im-pass').value.trim()||'1234';
+  const domain=($('im-domain').value.trim()||'alumnes.cat').toLowerCase();
+  const lines=$('im-data').value.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(!lines.length){ alert('No has enganxat cap nom.'); return; }
+  const existing=new Set(state.users.map(u=>u.email.toLowerCase()));
+  let added=0, skipped=0, i=0;
+  lines.forEach(line=>{
+    const parts=line.split(/[\t,;]+/).map(s=>s.trim()).filter(Boolean);
+    const name=parts[0];
+    if(!name){ skipped++; return; }
+    let email=(parts[1]||slugEmail(name,domain)).toLowerCase();
+    if(existing.has(email)){ skipped++; return; }
+    existing.add(email);
+    state.users.push({id:'u_'+Date.now()+'_'+(i++), name, email, pass, role:'student', classe:cls});
+    added++;
+  });
+  save(); closeModal();
+  alert('Importació completada.\nAfegits: '+added+'\nOmesos (duplicats/buits): '+skipped);
+  render();
+}
+
+/* ============================================================
+   GRUPS (llista)
+   ============================================================ */
+function renderGroups(m,u){
+  const list = u.role==='admin'? state.groups : state.groups.filter(g=>g.teacherId===u.id || g.memberIds.includes(u.id));
+  m.innerHTML=`
+    <div class="page-head"><div><div class="crumb">${u.role==='admin'?'Administració':u.role==='teacher'?'Professorat':'Alumnat'}</div><h1>${u.role==='admin'?'Tots els grups':'Grups'}</h1></div>
+      ${u.role==='teacher'?'<div class="actions"><button class="btn btn-ghost" onclick="importModal()">⇪ Importar alumnat</button><button class="btn btn-coral" onclick="newGroupModal()">+ Nou grup</button></div>':''}</div>
+    <div class="list">${list.length?list.map(g=>groupRow(g,u)).join(''):emptyBox('Cap grup per mostrar.')}</div>`;
+}
+function newGroupModal(){
+  const studs=state.users.filter(u=>u.role==='student');
+  const classes=classesOf();
+  if(!studs.length){
+    openModal(`<h2>Encara no hi ha alumnat</h2><div class="msub">Importa primer la teva classe per poder formar grups.</div>
+      <div class="modal-foot"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Tanca</button>
+        <button class="btn btn-primary btn-sm" style="width:auto" onclick="closeModal();importModal()">⇪ Importar alumnat</button></div>`);
+    return;
+  }
+  openModal(`
+    <h2>Nou grup de treball</h2><div class="msub">Filtra per classe i selecciona els membres.</div>
+    <div class="inline-form">
+      <div class="field"><label>Nom del grup / projecte</label><input id="gf-name" placeholder="Grup C · ..."></div>
+      <div class="field"><label>Mòdul / assignatura</label><input id="gf-subj" placeholder="Activitats físiques..."></div>
+      ${classes.length?`<div class="field"><label>Mostra alumnat de la classe</label>
+        <select id="gf-classfilter" onchange="filterGroupMembers()">
+          <option value="">Totes les classes</option>
+          ${classes.map(c=>`<option value="${esc(c)}">Classe ${esc(c)}</option>`).join('')}
+        </select></div>`:''}
+      <div class="field"><label>Membres (alumnat) · <span id="gf-count">0</span> triats</label>
+        <div id="gf-memlist" style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:4px;max-height:260px;overflow:auto">
+        ${studs.map(s=>`<label data-classe="${esc(s.classe||'')}" style="display:flex;gap:8px;align-items:center;font-size:13.5px;font-weight:500;background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;cursor:pointer">
+          <input type="checkbox" class="gf-mem" value="${s.id}" onchange="gfCount()"> <span style="flex:1">${esc(s.name)}</span>${s.classe?`<span class="tag tag-grey" style="padding:1px 7px">${esc(s.classe)}</span>`:''}</label>`).join('')}
+        </div>
+      </div>
+      <div class="help">Després de crear el grup podràs designar-ne el/la coordinador/a i posar la nota.</div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel·la</button>
+      <button class="btn btn-primary btn-sm" style="width:auto" onclick="createGroup()">Crear grup</button></div>`,'wide');
+}
+function filterGroupMembers(){
+  const f=$('gf-classfilter').value;
+  document.querySelectorAll('#gf-memlist label').forEach(l=>{
+    l.style.display = (!f || l.dataset.classe===f) ? 'flex' : 'none';
+  });
+}
+function gfCount(){ const n=document.querySelectorAll('.gf-mem:checked').length; const e=$('gf-count'); if(e)e.textContent=n; }
+function createGroup(){
+  const name=$('gf-name').value.trim(), subject=$('gf-subj').value.trim();
+  const mem=[...document.querySelectorAll('.gf-mem:checked')].map(c=>c.value);
+  if(!name){ alert('Posa un nom al grup.'); return; }
+  if(mem.length<2){ alert('Selecciona almenys 2 membres.'); return; }
+  const g={id:'g_'+Date.now(),name,subject,teacherId:me().id,coordinatorId:null,memberIds:mem,
+    grade:null,method:null,evalActive:false,resultsPublished:false,tasks:[],messages:[],evalData:{m1:{},m3:{}}};
+  state.groups.push(g); save(); closeModal(); go('group',{gid:g.id});
+}
+
+/* ============================================================
+   VISTA DETALL DE GRUP
+   ============================================================ */
+let groupTab='resum';
+function renderGroup(m,u){
+  const g=groupById(ctx.gid);
+  if(!g){ go('home'); return; }
+  const r = (u.role==='admin'||u.role==='teacher') ? u.role : roleInGroup(u.id,g);
+  if(!r){ m.innerHTML=emptyBox('No tens accés a aquest grup.'); return; }
+  const isCoord = r==='coordinator';
+  const isTeacher = (u.role==='teacher'&&g.teacherId===u.id);
+  const isAdmin = u.role==='admin';
+  const manage = isTeacher||isAdmin;
+
+  const banners={
+    admin:['rb-admin','🛠️ Administració'],
+    teacher:['rb-teacher','👩‍🏫 Professorat'],
+    coordinator:['rb-coord','⭐ Coordinador/a'],
+    student:['rb-student','🎓 Alumnat']
+  };
+  const b=banners[r];
+
+  // pestanyes segons rol
+  let tabs=[['resum','Resum'],['tasques','Tasques'],['chat','Xat intern']];
+  if(g.evalActive || manage || isCoord) tabs.push(['valoracio','Valoració']);
+  if(manage || isCoord) tabs.push(['resultats','Resultats']);
+  if(!tabs.find(t=>t[0]===groupTab)) groupTab='resum';
+
+  m.innerHTML=`
+    <div class="page-head"><div>
+      <div class="crumb"><a onclick="go('groups')" style="cursor:pointer">Grups</a> / ${esc(g.name)}</div>
+      <span class="role-banner ${b[0]}">${b[1]}</span>
+      <h1>${esc(g.name)}</h1>
+    </div></div>
+    <div class="tabs">${tabs.map(t=>`<button class="tab ${groupTab===t[0]?'active':''}" onclick="setTab('${t[0]}')">${t[1]}</button>`).join('')}</div>
+    <div id="tabc"></div>`;
+  const tc=$('tabc');
+  if(groupTab==='resum') tabResum(tc,g,u,r,{manage,isCoord});
+  if(groupTab==='tasques') tabTasques(tc,g,u,{manage,isCoord});
+  if(groupTab==='chat') tabChat(tc,g,u);
+  if(groupTab==='valoracio') tabValoracio(tc,g,u,r,{manage,isCoord});
+  if(groupTab==='resultats') tabResultats(tc,g,u,{manage,isCoord});
+}
+function setTab(t){ groupTab=t; render(); }
+
+/* ----- RESUM ----- */
+function tabResum(c,g,u,r,p){
+  const coord=userById(g.coordinatorId);
+  const prog=evalProgress(g);
+  c.innerHTML=`
+    <div class="grid g2">
+      <div class="card">
+        <h3>Informació del projecte</h3>
+        <div class="desc">${esc(g.subject)}</div>
+        <table class="evtable">
+          <tr><td>Coordinador/a</td><td style="text-align:right">${coord?esc(coord.name):'<span class="tag tag-grey">sense designar</span>'}</td></tr>
+          <tr><td>Membres</td><td style="text-align:right">${g.memberIds.length}</td></tr>
+          <tr><td>Nota base del treball</td><td style="text-align:right">${g.grade!=null?'<b>'+fmt(g.grade)+'</b> / 10':'<span class="tag tag-grey">pendent</span>'}</td></tr>
+          <tr><td>Mètode de repartiment</td><td style="text-align:right">${g.method?METHODS[g.method].ic+' '+METHODS[g.method].name:'<span class="tag tag-grey">sense triar</span>'}</td></tr>
+          <tr><td>Estat de la valoració</td><td style="text-align:right">${g.evalActive?'<span class="tag tag-green">oberta</span>':'<span class="tag tag-grey">tancada</span>'}</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>Membres de l'equip</h3>
+        <div class="desc">Composició del grup.</div>
+        <div class="list" style="gap:8px">
+        ${g.memberIds.map(id=>{const x=userById(id);return `<div style="display:flex;align-items:center;gap:11px">
+          <div class="avatar" style="width:32px;height:32px;font-size:13px">${initials(x.name)}</div>
+          <div style="flex:1"><b style="font-size:14px">${esc(x.name)}</b><div class="meta" style="font-size:12px;color:var(--ink-soft)">${esc(x.email)}</div></div>
+          ${g.coordinatorId===id?'<span class="tag tag-coral">⭐ Coord.</span>':''}</div>`;}).join('')}
+        </div>
+      </div>
+    </div>
+    ${p.manage?managePanel(g):''}
+    ${(p.isCoord||p.manage)?evalControlPanel(g,p.isCoord):''}
+    ${g.evalActive&&prog!=null?`<div class="notice n-info" style="margin-top:18px"><span class="ic">📊</span><div>Valoració en curs amb el <b>${METHODS[g.method].name}</b>. Han valorat <b>${prog}/${g.memberIds.length}</b> membres.</div></div>`:''}`;
+}
+function managePanel(g){
+  const studs=g.memberIds.map(userById);
+  return `<div class="card" style="margin-top:18px;border:1.5px solid var(--teal)">
+    <h3>🧑‍🏫 Panell del professorat</h3>
+    <div class="desc">Designa coordinador/a i fixa la nota base del treball.</div>
+    <div class="f-row">
+      <div class="field"><label>Coordinador/a del grup</label>
+        <select id="mp-coord">${studs.map(s=>`<option value="${s.id}" ${g.coordinatorId===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
+      <div class="field"><label>Nota base del treball (0–10)</label>
+        <input id="mp-grade" type="number" min="0" max="10" step="0.1" value="${g.grade!=null?g.grade:''}" placeholder="ex. 8.0"></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+      <button class="btn btn-primary btn-sm" style="width:auto" onclick="saveManage('${g.id}')">Desar canvis</button>
+      <button class="btn ${g.resultsPublished?'btn-danger':'btn-coral'} btn-sm" onclick="togglePublish('${g.id}')">${g.resultsPublished?'Ocultar resultats a l\'alumnat':'Publicar resultats a l\'alumnat'}</button>
+    </div>
+    <div class="help">${g.resultsPublished?'✅ L\'alumnat pot veure la seva nota individual.':'Quan publiquis, cada alumne/a veurà la seva nota final.'}</div>
+  </div>`;
+}
+function saveManage(gid){
+  const g=groupById(gid);
+  g.coordinatorId=$('mp-coord').value;
+  const gr=$('mp-grade').value;
+  g.grade= gr===''?null:Math.max(0,Math.min(10,parseFloat(gr)));
+  save(); render();
+}
+function togglePublish(gid){ const g=groupById(gid); g.resultsPublished=!g.resultsPublished; save(); render(); }
+
+function evalControlPanel(g, isCoord){
+  return `<div class="card" style="margin-top:18px;border:1.5px solid var(--coral)">
+    <h3>${isCoord?'⭐ Panell del coordinador/a':'🎚️ Configuració de la valoració'}</h3>
+    <div class="desc">Tria <b>quin dels tres mètodes</b> es farà servir i obre o tanca la valoració anònima de l'equip.</div>
+    <div class="method-pick">
+      ${[1,2,3].map(n=>`<div class="method-opt ${g.method===n?'sel':''}" onclick="pickMethod('${g.id}',${n})">
+        <b>${METHODS[n].ic} Mètode ${n}: ${METHODS[n].name} <span class="badge">${METHODS[n].short}</span> ${g.method===n?'<span class="tag tag-green" style="padding:1px 8px">✓ triat</span>':''}</b>
+        <p>${methodBlurb(n)}</p></div>`).join('')}
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+      <button class="btn ${g.evalActive?'btn-danger':'btn-coral'} btn-sm" onclick="toggleEval('${g.id}')" ${!g.method?'disabled style="opacity:.5;cursor:not-allowed"':''}>
+        ${g.evalActive?'⏹ Tancar valoració':'▶ Activar valoració'}</button>
+      ${g.evalActive?'<span class="help" style="align-self:center">Valoració oberta. Per canviar de mètode, tria\'n un altre i confirma el tancament.</span>':(!g.method?'<span class="help" style="align-self:center">Tria primer un mètode.</span>':'<span class="help" style="align-self:center">Mètode triat. Activa la valoració quan vulguis.</span>')}
+    </div>
+  </div>`;
+}
+function methodBlurb(n){
+  return {
+    1:'Cada membre reparteix de forma anònima una bossa de '+'(N×100) punts entre l\'equip. La mitjana rebuda marca el factor de la nota.',
+    2:'L\'equip desglossa les tasques amb un pes d\'esforç. La nota individual depèn de les tasques completades (gestiona-les a la pestanya Tasques).',
+    3:'Cada membre puntua els altres de l\'1 al 4 en 4 criteris (puntualitat, qualitat, iniciativa, comunicació). El % obtingut ajusta la nota.'
+  }[n];
+}
+function pickMethod(gid,n){
+  const g=groupById(gid);
+  if(g.method===n) return;
+  if(g.evalActive){
+    if(!confirm('La valoració està oberta. Per triar el mètode '+n+' cal tancar-la. Vols tancar-la i canviar de mètode?')) return;
+    g.evalActive=false;
+  }
+  g.method=n; save(); render();
+}
+function toggleEval(gid){
+  const g=groupById(gid);
+  if(!g.method){ alert('Tria un mètode primer.'); return; }
+  if(!g.evalActive && g.method===2 && g.tasks.length===0){ if(!confirm('No hi ha tasques definides. Vols obrir igualment?')) return; }
+  g.evalActive=!g.evalActive; save(); render();
+}
+
+/* ----- TASQUES ----- */
+function tabTasques(c,g,u,p){
+  const canEdit=p.isCoord||p.manage;
+  const sLbl={done:['tag-green','✓ Feta'],partial:['tag-gold','◑ Parcial'],pending:['tag-grey','○ Pendent']};
+  c.innerHTML=`
+    ${p.manage&&!p.isCoord?'<div class="notice n-info"><span class="ic">ℹ️</span><div>Com a professor/a pots consultar i editar les tasques; normalment les gestiona el/la coordinador/a.</div></div>':''}
+    <div class="page-head" style="margin-bottom:16px"><div></div>
+      ${canEdit?`<div class="actions"><button class="btn btn-coral btn-sm" onclick="taskModal('${g.id}')">+ Nova tasca</button></div>`:''}</div>
+    ${g.method===2?methodTwoHint(g):''}
+    <div class="list">
+    ${g.tasks.length?g.tasks.map(t=>{const a=userById(t.assignedTo);const s=sLbl[t.status];
+      return `<div class="row-item">
+        <div class="grow"><div class="ttl">${esc(t.title)} ${g.method===2?`<span class="tag tag-teal">${t.points} pts</span>`:''}</div>
+          <div class="meta">${esc(t.desc||'')} ${a?'· 👤 '+esc(a.name.split(' ')[0]):'· sense assignar'}</div></div>
+        <span class="tag ${s[0]}">${s[1]}</span>
+        ${canEdit?`<button class="btn btn-ghost btn-sm" onclick="cycleStatus('${g.id}','${t.id}')">Estat</button>
+          <button class="btn btn-ghost btn-sm" onclick="taskModal('${g.id}','${t.id}')">✎</button>
+          <button class="btn btn-sm btn-danger" onclick="delTask('${g.id}','${t.id}')">✕</button>`:''}
+      </div>`;}).join(''):emptyBox('Encara no hi ha tasques.')}
+    </div>`;
+}
+function methodTwoHint(g){
+  const total=g.tasks.reduce((a,t)=>a+t.points,0);
+  return `<div class="notice n-warn"><span class="ic">🎯</span><div><b>Mètode àgil actiu.</b> Esforç total repartit: <b>${total}</b> punts. La nota de cada membre es calcula segons les tasques completades (feta=100%, parcial=50%, pendent=0%).</div></div>`;
+}
+function cycleStatus(gid,tid){
+  const t=groupById(gid).tasks.find(x=>x.id===tid);
+  const order={pending:'done',done:'partial',partial:'pending'};
+  t.status=order[t.status]; save(); render();
+}
+function delTask(gid,tid){ const g=groupById(gid); g.tasks=g.tasks.filter(t=>t.id!==tid); save(); render(); }
+function taskModal(gid,tid){
+  const g=groupById(gid); const t=tid?g.tasks.find(x=>x.id===tid):null;
+  openModal(`
+    <h2>${t?'Editar tasca':'Nova tasca'}</h2><div class="msub">Assigna-la a un membre i, si fas servir el mètode àgil, dóna-li un pes d'esforç.</div>
+    <div class="inline-form">
+      <div class="field"><label>Títol</label><input id="tf-title" value="${t?esc(t.title):''}"></div>
+      <div class="field"><label>Descripció</label><input id="tf-desc" value="${t?esc(t.desc||''):''}"></div>
+      <div class="f-row">
+        <div class="field"><label>Assignar a</label><select id="tf-assign">
+          <option value="">— ningú —</option>
+          ${g.memberIds.map(id=>{const x=userById(id);return `<option value="${id}" ${t&&t.assignedTo===id?'selected':''}>${esc(x.name)}</option>`;}).join('')}</select></div>
+        <div class="field"><label>Pes d'esforç (1–40)</label><input id="tf-points" type="number" min="1" max="40" value="${t?t.points:10}"></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel·la</button>
+      <button class="btn btn-primary btn-sm" style="width:auto" onclick="saveTask('${gid}','${tid||''}')">Desar</button></div>`);
+}
+function saveTask(gid,tid){
+  const g=groupById(gid);
+  const title=$('tf-title').value.trim();
+  if(!title){alert('Posa un títol.');return;}
+  const data={title,desc:$('tf-desc').value.trim(),assignedTo:$('tf-assign').value||null,points:Math.max(1,parseInt($('tf-points').value)||1)};
+  if(tid){ Object.assign(g.tasks.find(t=>t.id===tid),data); }
+  else { g.tasks.push({id:'t_'+Date.now(),status:'pending',...data}); }
+  save(); closeModal(); render();
+}
+
+/* ----- XAT ----- */
+function tabChat(c,g,u){
+  c.innerHTML=`
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h3>Xat intern de l'equip</h3>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="refreshNow()">↻ Actualitza</button>
+          <button class="btn btn-ghost btn-sm" onclick="mailModal('${g.id}')">✉ Enviar correu corporatiu</button>
+        </div>
+      </div>
+      <div class="chat-box">
+        <div class="chat-msgs" id="chatmsgs">
+          ${g.messages.length?g.messages.map(msg=>{const s=userById(msg.userId);const mine=msg.userId===u.id;const cr=g.coordinatorId===msg.userId;
+            return `<div class="msg ${mine?'mine':''}"><div class="who">${esc(s?s.name.split(' ')[0]:'?')} ${cr?'<span class="tag tag-coral" style="padding:1px 6px">⭐</span>':''}</div>${esc(msg.text)}<div class="tm">${timeAgo(msg.ts)}</div></div>`;}).join(''):'<div class="empty"><div class="ic">💬</div>Cap missatge encara. Comença la conversa!</div>'}
+        </div>
+        <div class="chat-input">
+          <input id="chat-in" placeholder="Escriu un missatge..." onkeydown="if(event.key==='Enter')sendMsg('${g.id}')">
+          <button class="btn btn-primary" style="width:auto" onclick="sendMsg('${g.id}')">Enviar</button>
+        </div>
+      </div>
+    </div>`;
+  const box=$('chatmsgs'); if(box) box.scrollTop=box.scrollHeight;
+}
+function sendMsg(gid){
+  const inp=$('chat-in'); const txt=inp.value.trim(); if(!txt) return;
+  groupById(gid).messages.push({userId:me().id,text:txt,ts:Date.now()});
+  if(GAS){ google.script.run.withSuccessHandler(syncState).withFailureHandler(persistErr).postMessage(gid, me().id, txt); }
+  else { localSave(); }
+  render();
+}
+function mailModal(gid){
+  const g=groupById(gid);
+  openModal(`
+    <h2>✉ Correu corporatiu</h2><div class="msub">S'obrirà el teu client de correu amb els destinataris ja posats.</div>
+    <div class="inline-form">
+      <div class="field"><label>Destinataris</label>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+        ${g.memberIds.map(id=>{const x=userById(id);return `<label style="display:flex;gap:8px;align-items:center;font-size:13.5px"><input type="checkbox" class="ml-to" value="${esc(x.email)}" checked> ${esc(x.name)} <small style="color:var(--ink-soft)">${esc(x.email)}</small></label>`;}).join('')}
+        </div></div>
+      <div class="field"><label>Assumpte</label><input id="ml-subj" value="[${esc(g.name)}] "></div>
+      <div class="field"><label>Missatge</label><textarea id="ml-body" rows="4" placeholder="Escriu el teu missatge..."></textarea></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel·la</button>
+      <button class="btn btn-primary btn-sm" style="width:auto" onclick="sendMail()">Obrir correu</button></div>`);
+}
+function sendMail(){
+  const to=[...document.querySelectorAll('.ml-to:checked')].map(c=>c.value).join(',');
+  const subj=encodeURIComponent($('ml-subj').value);
+  const body=encodeURIComponent($('ml-body').value);
+  if(!to){alert('Tria almenys un destinatari.');return;}
+  const url=`mailto:${to}?subject=${subj}&body=${body}`;
+  const a=document.createElement('a'); a.href=url; a.target='_blank'; a.rel='noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+  closeModal();
+}
+
+/* ----- VALORACIÓ (formulari anònim) ----- */
+function tabValoracio(c,g,u,r,p){
+  if(!g.method){ c.innerHTML=`<div class="notice n-warn"><span class="ic">⚠️</span><div>El/la coordinador/a encara no ha triat cap mètode de valoració.</div></div>`; return; }
+  if(g.method===2){
+    c.innerHTML=`<div class="notice n-info"><span class="ic">🎯</span><div>Aquest grup fa servir el <b>mètode àgil</b>: no hi ha votació entre companys. La nota surt de les <b>tasques completades</b>. Consulta-les a la pestanya <b>Tasques</b> i els <b>Resultats</b>.</div></div>`;
+    return;
+  }
+  if(!g.evalActive){ c.innerHTML=`<div class="notice n-warn"><span class="ic">🔒</span><div>La valoració està tancada. ${p.isCoord?'Obre-la des del panell del coordinador (pestanya Resum).':'Espera que el/la coordinador/a l\'obri.'}</div></div>`; return; }
+
+  // només els membres del grup voten; professorat/admin veuen el formulari deshabilitat
+  const isMember = g.memberIds.includes(u.id);
+  if(!isMember){ c.innerHTML=`<div class="notice n-info"><span class="ic">👀</span><div>Ets professorat/administració: la votació la fan els membres del grup. Pots veure el progrés i els resultats a les seves pestanyes.</div></div>`; return; }
+
+  if(g.method===1) renderM1Form(c,g,u);
+  if(g.method===3) renderM3Form(c,g,u);
+}
+function renderM1Form(c,g,u){
+  const N=g.memberIds.length, bag=N*100;
+  const prev=(g.evalData.m1||{})[u.id]||{};
+  const done = !!(g.evalData.m1||{})[u.id];
+  c.innerHTML=`
+    <div class="card">
+      <h3>🪙 Repartiment de la bossa de punts</h3>
+      <div class="desc">Tens <b>${bag} punts</b> per repartir entre tot l'equip (tu inclòs/osa). Premia qui ha treballat més. La suma ha de ser exactament ${bag}.</div>
+      ${done?'<div class="notice n-ok"><span class="ic">✅</span><div>Ja has enviat la teva valoració. Pots modificar-la i tornar a enviar.</div></div>':''}
+      <table class="evtable">
+        <tr><th>Membre</th><th style="text-align:right">Punts assignats</th></tr>
+        ${g.memberIds.map(id=>{const x=userById(id);return `<tr><td>${esc(x.name)} ${id===u.id?'<span class="tag tag-grey">tu</span>':''}</td>
+          <td style="text-align:right"><input class="m1-in points-in" data-id="${id}" type="number" min="0" value="${prev[id]!=null?prev[id]:Math.round(bag/N)}" oninput="m1Sum(${bag})"></td></tr>`;}).join('')}
+      </table>
+      <div id="m1meter" class="budget-meter"></div>
+      <button id="m1btn" class="btn btn-primary" onclick="submitM1('${g.id}',${bag})">Enviar valoració anònima</button>
+    </div>`;
+  m1Sum(bag);
+}
+function m1Sum(bag){
+  const ins=[...document.querySelectorAll('.m1-in')];
+  const sum=ins.reduce((a,i)=>a+(parseInt(i.value)||0),0);
+  const meter=$('m1meter'), btn=$('m1btn');
+  const ok=sum===bag;
+  meter.className='budget-meter '+(ok?'ok':'bad');
+  meter.innerHTML=`<span>${ok?'✅ Repartiment correcte':'Suma actual'}</span><span>${sum} / ${bag} punts</span>`;
+  if(btn){ btn.disabled=!ok; btn.style.opacity=ok?'1':'.5'; btn.style.cursor=ok?'pointer':'not-allowed'; }
+}
+function submitM1(gid,bag){
+  const g=groupById(gid); const obj={};
+  let sum=0;
+  document.querySelectorAll('.m1-in').forEach(i=>{const v=parseInt(i.value)||0;obj[i.dataset.id]=v;sum+=v;});
+  if(sum!==bag){alert('La suma ha de ser exactament '+bag+'.');return;}
+  g.evalData.m1=g.evalData.m1||{}; g.evalData.m1[me().id]=obj;
+  persistEval(gid, 1, obj);
+  alert('Valoració enviada de forma anònima. Gràcies!'); render();
+}
+function renderM3Form(c,g,u){
+  const others=g.memberIds.filter(id=>id!==u.id);
+  const prev=(g.evalData.m3||{})[u.id]||{};
+  const done=!!(g.evalData.m3||{})[u.id];
+  c.innerHTML=`
+    <div class="card">
+      <h3>📐 Rúbrica interna</h3>
+      <div class="desc">Puntua cada company/a de l'1 al 4 en cada criteri. No et valores a tu mateix/a.</div>
+      <div class="scale-legend"><b>4</b> Excel·lent · <b>3</b> Bo · <b>2</b> Regular · <b>1</b> Deficient</div>
+      ${done?'<div class="notice n-ok"><span class="ic">✅</span><div>Ja has enviat la teva valoració. Pots modificar-la i tornar a enviar.</div></div>':''}
+      ${others.map(id=>{const x=userById(id);const pv=prev[id]||[0,0,0,0];
+        return `<div class="card" style="box-shadow:none;border:1px solid var(--line);margin-bottom:12px">
+          <b style="font-size:15px">${esc(x.name)}</b>
+          <table class="evtable" style="margin-top:8px">
+          ${CRITERIA.map((cr,ci)=>`<tr><td>${cr}</td><td style="text-align:right"><div class="crit-cell" style="justify-content:flex-end">
+            ${[1,2,3,4].map(v=>`<button class="m3b ${pv[ci]===v?'sel':''}" data-t="${id}" data-c="${ci}" data-v="${v}" onclick="m3Pick(this)">${v}</button>`).join('')}
+          </div></td></tr>`).join('')}
+          </table></div>`;}).join('')}
+      <button class="btn btn-primary" onclick="submitM3('${g.id}')">Enviar valoració anònima</button>
+    </div>`;
+}
+function m3Pick(btn){
+  document.querySelectorAll(`.m3b[data-t="${btn.dataset.t}"][data-c="${btn.dataset.c}"]`).forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+function submitM3(gid){
+  const g=groupById(gid); const u=me();
+  const others=g.memberIds.filter(id=>id!==u.id);
+  const obj={};
+  let complete=true;
+  others.forEach(id=>{
+    const arr=[0,0,0,0];
+    CRITERIA.forEach((_,ci)=>{
+      const sel=document.querySelector(`.m3b.sel[data-t="${id}"][data-c="${ci}"]`);
+      if(sel) arr[ci]=parseInt(sel.dataset.v); else complete=false;
+    });
+    obj[id]=arr;
+  });
+  if(!complete){alert('Has de puntuar tots els criteris de tots els companys.');return;}
+  g.evalData.m3=g.evalData.m3||{}; g.evalData.m3[u.id]=obj;
+  persistEval(gid, 3, obj);
+  alert('Valoració enviada de forma anònima. Gràcies!'); render();
+}
+/* desa un vot a la full de càlcul (upsert d'una sola fila, amb bloqueig) */
+function persistEval(gid, method, payload){
+  if(GAS){ google.script.run.withSuccessHandler(syncState).withFailureHandler(persistErr)
+            .submitEvaluation(gid, method, me().id, JSON.stringify(payload)); }
+  else { localSave(); }
+}
+
+/* ----- RESULTATS ----- */
+function tabResultats(c,g,u,p){
+  if(!g.method){ c.innerHTML=`<div class="notice n-warn"><span class="ic">⚠️</span><div>Encara no hi ha cap mètode configurat.</div></div>`; return; }
+  if(g.grade==null){ c.innerHTML=`<div class="notice n-warn"><span class="ic">📝</span><div>El professorat encara no ha posat la <b>nota base</b> del treball. Els resultats es calcularan automàticament quan ho faci.</div></div>`; }
+  const res=results(g);
+  const head=`<div class="notice n-info"><span class="ic">${METHODS[g.method].ic}</span><div><b>${METHODS[g.method].name}</b> · Nota base del treball: <b>${g.grade!=null?fmt(g.grade):'—'}/10</b>. Tots els vots són anònims; aquí només es mostren els resultats agregats.</div></div>`;
+
+  let table='';
+  if(g.method===2){
+    table=`<table class="evtable">
+      <tr><th>Membre</th><th>Esforç completat</th><th>Compliment</th><th style="text-align:right">Nota final</th></tr>
+      ${res.map(o=>`<tr><td>${esc(o.name)}</td><td>${o.detail}</td>
+        <td style="width:160px"><div class="bar"><i style="width:${Math.round((o.factor||0)*100)}%"></i></div></td>
+        <td class="num" style="text-align:right">${o.final!=null?fmt(o.final):'—'}</td></tr>`).join('')}
+    </table>
+    <div class="help">Ideal equitatiu: ${fmt(res.ideal||0)} pts/persona · Esforç total: ${res.total||0} pts.</div>`;
+  } else {
+    const prog=evalProgress(g);
+    table=`<div class="help" style="margin-bottom:10px">Valoracions rebudes: <b>${prog}/${g.memberIds.length}</b> membres.</div>
+    <table class="evtable">
+      <tr><th>Membre</th><th>Detall (anònim, agregat)</th><th>Factor</th><th style="text-align:right">Nota final</th></tr>
+      ${res.map(o=>`<tr><td>${esc(o.name)}</td><td>${o.detail||'<span class="tag tag-grey">sense valoracions</span>'}</td>
+        <td>${o.factor!=null?(Math.round(o.factor*100)/100):'—'}</td>
+        <td class="num" style="text-align:right">${o.final!=null?fmt(o.final):'—'}</td></tr>`).join('')}
+    </table>`;
+  }
+  c.innerHTML=`${head}
+    <div style="text-align:right;margin-bottom:10px"><button class="btn btn-ghost btn-sm" onclick="refreshNow()">↻ Actualitza resultats</button></div>
+    <div class="card">${table}</div>
+    ${p.manage?`<div class="help" style="margin-top:14px">${g.resultsPublished?'✅ Resultats publicats: l\'alumnat veu la seva nota.':'Recorda <b>publicar</b> els resultats (pestanya Resum) perquè l\'alumnat els vegi.'}</div>`:''}`;
+}
+
+/* ============================================================
+   MODALS
+   ============================================================ */
+function openModal(html,extra=''){
+  const o=document.createElement('div'); o.className='overlay'; o.id='ovl';
+  o.innerHTML=`<div class="modal ${extra}">${html}</div>`;
+  o.addEventListener('click',e=>{if(e.target===o)closeModal();});
+  document.body.appendChild(o);
+}
+function closeModal(){ const o=$('ovl'); if(o)o.remove(); }
+
+function resetDemo(){
+  if(!confirm('Restaurar totes les dades de demostració? Es perdran els canvis.')) return;
+  if(GAS){ google.script.run.withSuccessHandler(s=>{state=s;view='home';render();}).withFailureHandler(persistErr).resetDemo(); }
+  else { state=seed(); localSave(); view='home'; render(); }
+}
+
+/* ---------- ARRENCADA ---------- */
+function loadingScreen(){
+  return `<div style="min-height:100vh;display:grid;place-items:center;color:var(--ink-soft)">
+    <div style="text-align:center">
+      <div style="font-family:'Bricolage Grotesque';font-weight:800;font-size:22px;color:var(--teal);margin-bottom:10px">Repartiment de punts</div>
+      <div class="spin" style="width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--teal);border-radius:50%;margin:0 auto;animation:sp 1s linear infinite"></div>
+      <style>@keyframes sp{to{transform:rotate(360deg)}}</style>
+      <p style="margin-top:14px;font-size:14px">Carregant dades de la full de càlcul…</p>
+    </div></div>`;
+}
+function errScreen(e){
+  return `<div style="min-height:100vh;display:grid;place-items:center;padding:24px">
+    <div class="card" style="max-width:440px;text-align:center">
+      <h3>No s'han pogut carregar les dades</h3>
+      <p class="desc">${esc(e&&e.message?e.message:e)}</p>
+      <button class="btn btn-primary" onclick="boot()" style="margin-top:8px">Tornar a provar</button>
+    </div></div>`;
+}
+function boot(){
+  if(GAS){
+    root.innerHTML=loadingScreen();
+    google.script.run.withSuccessHandler(s=>{ state=s; render(); }).withFailureHandler(e=>{ root.innerHTML=errScreen(e); }).loadState();
+  } else {
+    render();
+  }
+}
+boot();
+</script>
 </body>
 </html>

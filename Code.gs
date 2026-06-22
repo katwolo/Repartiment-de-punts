@@ -1,210 +1,282 @@
-// REPARTIMENT DE PUNTS — Servidor Apps Script
-// Gestiona sessions de coevaluació i emmagatzema dades al Google Sheets vinculat.
-//
-// ARQUITECTURA:
-//   Code.gs  → projecte Apps Script (lògica servidor, s'edita aquí)
-//   index.html → repositori GitHub  (frontend, s'actualitza sol)
+/*****************************************************************
+ * REPARTIMENT DE PUNTS · Backend (Google Apps Script)
+ * Persistència a la FULL DE CÀLCUL vinculada.
+ *
+ * Pestanyes que crea automàticament:
+ *   Users · Groups · Tasks · Messages · Evaluations
+ *
+ * Desplegament:  Implementa > Nova implementació > Aplicació web
+ *   - Executa com a: Jo (l'amo de la full)
+ *   - Qui hi té accés: Qualsevol amb l'enllaç (o el teu domini)
+ *****************************************************************/
 
-var GITHUB_BRANCH = 'claude/app-script-code-from-url-9tu03y';
-var GITHUB_RAW    = 'https://raw.githubusercontent.com/katwolo/Repartiment-de-punts/' + GITHUB_BRANCH + '/';
+const HEADERS = {
+  Users:        ['id','name','email','pass','role','classe'],
+  Groups:       ['id','name','subject','teacherId','coordinatorId','memberIds','grade','method','evalActive','resultsPublished'],
+  Tasks:        ['id','groupId','title','desc','points','assignedTo','status'],
+  Messages:     ['groupId','userId','text','ts'],
+  Evaluations:  ['groupId','method','evaluatorId','payload']
+};
 
-function doGet(e) {
-  var html = UrlFetchApp.fetch(GITHUB_RAW + 'index.html').getContentText();
-  return HtmlService.createHtmlOutput(html)
-    .setTitle('Repartidor de Puntos - Coevaluación')
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+function ss(){ return SpreadsheetApp.getActiveSpreadsheet(); }
+
+/* ---------- Servir l'aplicació ---------- */
+function doGet(){
+  setupSheets();
+  return HtmlService.createHtmlOutputFromFile('Index')
+    .setTitle('Repartiment de punts')
+    .addMetaTag('viewport','width=device-width, initial-scale=1.0')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-// ---------------------------------------------------------------------------
-// PLANTILLA — crea des de zero totes les fulles del model V1
-// ---------------------------------------------------------------------------
-function plantillaSheets() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-
-  function getOrCreate(name) {
-    return ss.getSheetByName(name) || ss.insertSheet(name);
+/* ---------- Utilitats de fulls ---------- */
+function getSheet(name){
+  let sh = ss().getSheetByName(name);
+  if(!sh){
+    sh = ss().insertSheet(name);
+    sh.appendRow(HEADERS[name]);
+    sh.setFrozenRows(1);
+    return sh;
   }
-
-  // Web — URL pública del web app
-  const webSheet = getOrCreate('Web');
-  webSheet.clearContents();
-  webSheet.appendRow(['url', ScriptApp.getService().getUrl()]);
-
-  // Users
-  const usersSheet = getOrCreate('Users');
-  usersSheet.clearContents();
-  usersSheet.appendRow(['id', 'name', 'email', 'pass', 'role', 'classe']);
-  usersSheet.appendRow(['u_admin', 'Administrador', 'admin@centre.cat', 1234, 'admin', '']);
-
-  // Groups
-  const groupsSheet = getOrCreate('Groups');
-  groupsSheet.clearContents();
-  groupsSheet.appendRow([
-    'id', 'name', 'subject', 'teacherId', 'coordinatorId',
-    'memberIds', 'grade', 'method', 'evalActive', 'resultsPublished'
-  ]);
-
-  // Tasks
-  const tasksSheet = getOrCreate('Tasks');
-  tasksSheet.clearContents();
-  tasksSheet.appendRow(['id', 'groupId', 'title', 'desc', 'points', 'assignedTo', 'status']);
-
-  // Messages
-  const messagesSheet = getOrCreate('Messages');
-  messagesSheet.clearContents();
-  messagesSheet.appendRow(['groupId', 'userId', 'text', 'ts']);
-
-  // Evaluations
-  const evaluationsSheet = getOrCreate('Evaluations');
-  evaluationsSheet.clearContents();
-  evaluationsSheet.appendRow(['groupId', 'method', 'evaluatorId', 'payload']);
-
-  // Sessions i Respuestas per al flux actual de votació
-  setupSheets();
-
-  return 'Plantilla V1 creada correctament. Totes les fulles estan llestes.';
+  // sincronitza la fila de capçaleres (per si s'ha actualitzat l'app, p.ex. nova columna "classe")
+  const head = HEADERS[name];
+  const current = sh.getRange(1,1,1,head.length).getValues()[0];
+  let diff = false;
+  for(var i=0;i<head.length;i++){ if(String(current[i]) !== head[i]){ diff = true; break; } }
+  if(diff){ sh.getRange(1,1,1,head.length).setValues([head]); sh.setFrozenRows(1); }
+  return sh;
 }
 
-// ---------------------------------------------------------------------------
-// SETUP — crea Sessions i Respuestas si no existeixen
-// ---------------------------------------------------------------------------
-function setupSheets() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  if (!ss.getSheetByName('Sessions')) {
-    ss.insertSheet('Sessions')
-      .appendRow(['ID', 'Modo', 'Profesor', 'Nota_Base', 'Integrantes', 'Creado']);
-  }
-  if (!ss.getSheetByName('Respuestas')) {
-    ss.insertSheet('Respuestas')
-      .appendRow(['ID_Sesion', 'Votante', 'Puntuaciones', 'Justificacion', 'Timestamp']);
-  }
+function setupSheets(){
+  Object.keys(HEADERS).forEach(getSheet);
+  if(getSheet('Users').getLastRow() < 2) seedData();
 }
 
-// ---------------------------------------------------------------------------
-// SESSIONS
-// ---------------------------------------------------------------------------
-function createNewSession(data) {
-  setupSheets();
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName('Sessions');
-
-  // Utilities.getUuid() garanteix unicitat (V8 runtime)
-  const id = Utilities.getUuid().substring(0, 8);
-
-  sheet.appendRow([
-    id,
-    data.mode,
-    data.profEmail,
-    data.baseGrade || 0,
-    JSON.stringify(data.members),
-    new Date()
-  ]);
-
-  const url = ScriptApp.getService().getUrl();
-  data.members.forEach(function(member) {
-    if (member.email) {
-      try {
-        MailApp.sendEmail({
-          to: member.email,
-          subject: 'Acceso a Coevaluación: ' + id,
-          htmlBody:
-            'Hola ' + member.name + ',<br><br>' +
-            'El teu equip ha iniciat una sessió de coevaluació (<b>' + data.mode + '</b>).<br><br>' +
-            'Entra aquí: <a href="' + url + '">' + url + '</a><br>' +
-            'Codi de sessió: <b>' + id + '</b>'
-        });
-      } catch (err) {
-        console.error('Error enviant email a ' + member.email + ': ' + err.message);
-      }
-    }
+function readSheet(name){
+  const sh = getSheet(name);
+  const values = sh.getDataRange().getValues();
+  if(values.length < 2) return [];
+  const head = values[0];
+  return values.slice(1).map(function(row){
+    const o = {};
+    head.forEach(function(h,i){ o[h] = row[i]; });
+    return o;
   });
-
-  return { id: id, members: data.members, mode: data.mode, baseGrade: data.baseGrade };
 }
 
-function getSessionData(id) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sessionsSheet = ss.getSheetByName('Sessions');
-  if (!sessionsSheet) return null;
-
-  const sessions = sessionsSheet.getDataRange().getValues();
-  for (var i = 1; i < sessions.length; i++) {
-    if (String(sessions[i][0]) === String(id)) {
-      return {
-        id:        sessions[i][0],
-        mode:      sessions[i][1],
-        profEmail: sessions[i][2],
-        baseGrade: sessions[i][3],
-        members:   JSON.parse(sessions[i][4])
-      };
-    }
+function writeSheet(name, rows){
+  const sh = getSheet(name);
+  const head = HEADERS[name];
+  if(sh.getLastRow() > 1){
+    sh.getRange(2,1, sh.getLastRow()-1, head.length).clearContent();
   }
-  return null;
-}
-
-// ---------------------------------------------------------------------------
-// VOTES
-// ---------------------------------------------------------------------------
-function submitUserVote(voteData) {
-  // Assegura que les fulles existeixen abans d'accedir-hi
-  setupSheets();
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const respSheet = ss.getSheetByName('Respuestas');
-
-  // Comprova duplicats (s'omite la fila de capçalera, índex 0)
-  const responses = respSheet.getDataRange().getValues();
-  for (var i = 1; i < responses.length; i++) {
-    if (String(responses[i][0]) === String(voteData.sessionId) &&
-        responses[i][1] === voteData.voterName) {
-      throw new Error('Ja has votat en aquesta sessió.');
-    }
-  }
-
-  respSheet.appendRow([
-    voteData.sessionId,
-    voteData.voterName,
-    JSON.stringify(voteData.scores),
-    voteData.justification || '',
-    new Date()
-  ]);
-
-  checkAndSendProfessorReport(voteData.sessionId);
-  return true;
-}
-
-function checkAndSendProfessorReport(sessionId) {
-  const session = getSessionData(sessionId);
-  if (!session) return;
-
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const respSheet = ss.getSheetByName('Respuestas');
-  if (!respSheet) return;
-
-  // slice(1) elimina la fila de capçalera abans de filtrar
-  const allRows = respSheet.getDataRange().getValues();
-  const sessionVotes = allRows.slice(1).filter(function(r) {
-    return String(r[0]) === String(sessionId);
-  });
-
-  if (sessionVotes.length === session.members.length) {
-    var rows = sessionVotes.map(function(v) {
-      return '<tr><td>' + v[1] + '</td><td>' + v[2] + '</td><td>' + v[3] + '</td></tr>';
-    }).join('');
-
-    var reportHtml =
-      '<h2>Informe de Coevaluació — Sessió ' + sessionId + '</h2>' +
-      '<p>Mètode: <b>' + session.mode + '</b> | Nota Base: <b>' + session.baseGrade + '</b></p>' +
-      '<table border="1" style="border-collapse:collapse;width:100%">' +
-      '<tr><th>Votant</th><th>Puntuacions</th><th>Comentari</th></tr>' +
-      rows +
-      '</table>' +
-      '<p>Consulta les dades completes al teu Google Sheet.</p>';
-
-    MailApp.sendEmail({
-      to: session.profEmail,
-      subject: 'RESULTATS FINALS — Sessió ' + sessionId,
-      htmlBody: reportHtml
+  if(!rows.length) return;
+  const data = rows.map(function(o){
+    return head.map(function(h){
+      const v = o[h];
+      return (v === undefined || v === null) ? '' : v;
     });
+  });
+  sh.getRange(2,1, data.length, head.length).setValues(data);
+}
+
+/* ---------- LECTURA: muntar l'estat ---------- */
+function loadState(){
+  setupSheets();
+
+  const users = readSheet('Users').map(function(u){
+    return { id:String(u.id), name:String(u.name), email:String(u.email), pass:String(u.pass), role:String(u.role), classe:String(u.classe || '') };
+  });
+
+  const groups = readSheet('Groups').map(function(g){
+    return {
+      id: String(g.id),
+      name: String(g.name),
+      subject: String(g.subject),
+      teacherId: String(g.teacherId),
+      coordinatorId: g.coordinatorId ? String(g.coordinatorId) : null,
+      memberIds: String(g.memberIds || '').split(',').map(function(s){return s.trim();}).filter(Boolean),
+      grade: (g.grade === '' || g.grade === null) ? null : Number(g.grade),
+      method: (g.method === '' || g.method === null) ? null : Number(g.method),
+      evalActive: (g.evalActive === true || String(g.evalActive).toUpperCase() === 'TRUE'),
+      resultsPublished: (g.resultsPublished === true || String(g.resultsPublished).toUpperCase() === 'TRUE'),
+      tasks: [], messages: [], evalData: { m1:{}, m3:{} }
+    };
+  });
+  const byId = {};
+  groups.forEach(function(g){ byId[g.id] = g; });
+
+  readSheet('Tasks').forEach(function(t){
+    const g = byId[String(t.groupId)];
+    if(!g) return;
+    g.tasks.push({
+      id:String(t.id), title:String(t.title), desc:String(t.desc || ''),
+      points:Number(t.points) || 0, assignedTo: t.assignedTo ? String(t.assignedTo) : null,
+      status:String(t.status || 'pending')
+    });
+  });
+
+  readSheet('Messages').forEach(function(m){
+    const g = byId[String(m.groupId)];
+    if(!g) return;
+    g.messages.push({ userId:String(m.userId), text:String(m.text), ts:Number(m.ts) || 0 });
+  });
+  groups.forEach(function(g){ g.messages.sort(function(a,b){ return a.ts - b.ts; }); });
+
+  readSheet('Evaluations').forEach(function(e){
+    const g = byId[String(e.groupId)];
+    if(!g) return;
+    const method = Number(e.method);
+    let payload = {};
+    try { payload = JSON.parse(e.payload); } catch(x){ payload = {}; }
+    g.evalData[ method === 3 ? 'm3' : 'm1' ][ String(e.evaluatorId) ] = payload;
+  });
+
+  return { users: users, groups: groups };
+}
+
+/* ---------- ESCRIPTURA en bloc: usuaris, grups i tasques ----------
+   (NO toca Messages ni Evaluations per no trepitjar vots/xat concurrents) */
+function saveStateBulk(stateJson){
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    const st = JSON.parse(stateJson);
+
+    writeSheet('Users', (st.users || []).map(function(u){
+      return { id:u.id, name:u.name, email:u.email, pass:u.pass, role:u.role, classe:u.classe || '' };
+    }));
+
+    writeSheet('Groups', (st.groups || []).map(function(g){
+      return {
+        id:g.id, name:g.name, subject:g.subject, teacherId:g.teacherId,
+        coordinatorId: g.coordinatorId || '',
+        memberIds: (g.memberIds || []).join(','),
+        grade: (g.grade == null) ? '' : g.grade,
+        method: (g.method == null) ? '' : g.method,
+        evalActive: !!g.evalActive,
+        resultsPublished: !!g.resultsPublished
+      };
+    }));
+
+    const tasks = [];
+    (st.groups || []).forEach(function(g){
+      (g.tasks || []).forEach(function(t){
+        tasks.push({ id:t.id, groupId:g.id, title:t.title, desc:t.desc || '',
+                     points:t.points, assignedTo:t.assignedTo || '', status:t.status });
+      });
+    });
+    writeSheet('Tasks', tasks);
+
+    // neteja missatges/valoracions de grups que ja no existeixen
+    pruneOrphans((st.groups || []).map(function(g){ return String(g.id); }));
+
+    return loadState();
+  } finally {
+    lock.releaseLock();
   }
+}
+
+function pruneOrphans(validIds){
+  const valid = {};
+  validIds.forEach(function(id){ valid[String(id)] = true; });
+  ['Messages','Evaluations'].forEach(function(name){
+    const kept = readSheet(name).filter(function(r){ return valid[String(r.groupId)]; });
+    writeSheet(name, kept);
+  });
+}
+
+/* ---------- ESCRIPTURA granular: un sol vot (anònim) ---------- */
+function submitEvaluation(groupId, method, evaluatorId, payloadJson){
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    const rows = readSheet('Evaluations').filter(function(r){
+      return !(String(r.groupId) === String(groupId)
+            && String(r.evaluatorId) === String(evaluatorId)
+            && Number(r.method) === Number(method));
+    });
+    rows.push({ groupId:groupId, method:method, evaluatorId:evaluatorId, payload:payloadJson });
+    writeSheet('Evaluations', rows);
+    return loadState();
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/* ---------- ESCRIPTURA granular: un missatge de xat ---------- */
+function postMessage(groupId, userId, text){
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    getSheet('Messages').appendRow([groupId, userId, text, Date.now()]);
+    return loadState();
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/* ---------- Restaurar dades de demostració ---------- */
+function resetDemo(){
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    Object.keys(HEADERS).forEach(function(name){
+      const sh = getSheet(name);
+      if(sh.getLastRow() > 1) sh.getRange(2,1, sh.getLastRow()-1, HEADERS[name].length).clearContent();
+    });
+    seedData();
+    return loadState();
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/* ---------- Dades inicials ---------- */
+function seedData(){
+  const now = Date.now();
+
+  writeSheet('Users', [
+    { id:'u_admin', name:'Direcció Centre',   email:'admin@institut.cat', pass:'admin', role:'admin',   classe:'' },
+    { id:'u_prof',  name:'Iván (Professor)',  email:'ivan@institut.cat',  pass:'prof',  role:'teacher', classe:'' },
+    { id:'u_prof2', name:'Marta Roca',        email:'marta@institut.cat', pass:'prof',  role:'teacher', classe:'' },
+    { id:'u_s1', name:'Anna Ferrer',  email:'anna@alumnes.cat',  pass:'1234', role:'student', classe:'A' },
+    { id:'u_s2', name:'Bru Soler',    email:'bru@alumnes.cat',   pass:'1234', role:'student', classe:'A' },
+    { id:'u_s3', name:'Carla Vidal',  email:'carla@alumnes.cat', pass:'1234', role:'student', classe:'A' },
+    { id:'u_s4', name:'Dani Pons',    email:'dani@alumnes.cat',  pass:'1234', role:'student', classe:'A' },
+    { id:'u_s5', name:'Èlia Mas',     email:'elia@alumnes.cat',  pass:'1234', role:'student', classe:'B' },
+    { id:'u_s6', name:'Pol Roig',     email:'pol@alumnes.cat',   pass:'1234', role:'student', classe:'B' }
+  ]);
+
+  writeSheet('Groups', [
+    { id:'g1', name:'Grup A · Investigació de mercat', subject:'Empresa i emprenedoria',
+      teacherId:'u_prof', coordinatorId:'u_s1', memberIds:'u_s1,u_s2,u_s3,u_s4',
+      grade:8, method:1, evalActive:true, resultsPublished:false },
+    { id:'g2', name:'Grup B · Sessió d\'aquagym', subject:'Activitats aquàtiques',
+      teacherId:'u_prof', coordinatorId:'u_s5', memberIds:'u_s5,u_s6',
+      grade:'', method:'', evalActive:false, resultsPublished:false }
+  ]);
+
+  writeSheet('Tasks', [
+    { id:'t1', groupId:'g1', title:'Dissenyar i llançar l\'enquesta', desc:'Crear el formulari i difondre\'l', points:35, assignedTo:'u_s1', status:'done' },
+    { id:'t2', groupId:'g1', title:'Redactar el marc teòric',         desc:'Fonamentació de la recerca',     points:25, assignedTo:'u_s2', status:'done' },
+    { id:'t3', groupId:'g1', title:'Analitzar dades i gràfics',       desc:'Tractament estadístic',          points:30, assignedTo:'u_s3', status:'partial' },
+    { id:'t4', groupId:'g1', title:'Format, ortografia i conclusions',desc:'Revisió final',                  points:10, assignedTo:'u_s4', status:'pending' }
+  ]);
+
+  writeSheet('Messages', [
+    { groupId:'g1', userId:'u_s1', text:'Hola equip! He activat la valoració amb el mètode del pressupost. Quan pugueu, repartiu els punts.', ts: now - 3600000 },
+    { groupId:'g1', userId:'u_s2', text:'Fet! Bona feina amb l\'enquesta 👍', ts: now - 1800000 }
+  ]);
+
+  writeSheet('Evaluations', []);
+}
+
+/* ---------- Menú d'ajuda dins de la full ---------- */
+function onOpen(){
+  SpreadsheetApp.getUi()
+    .createMenu('Repartiment de punts')
+    .addItem('Inicialitzar / crear pestanyes', 'setupSheets')
+    .addItem('Restaurar dades de demostració', 'resetDemo')
+    .addToMenu();
 }
