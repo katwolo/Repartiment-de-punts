@@ -1,13 +1,13 @@
 /*****************************************************************
  * REPARTIMENT DE PUNTS · Backend (Google Apps Script)
- * Persistència a la FULL DE CÀLCUL vinculada.
+ * API JSON — servida des de GitHub Pages
  *
  * Pestanyes que crea automàticament:
  *   Users · Groups · Tasks · Messages · Evaluations
  *
  * Desplegament:  Implementa > Nova implementació > Aplicació web
  *   - Executa com a: Jo (l'amo de la full)
- *   - Qui hi té accés: Qualsevol amb l'enllaç (o el teu domini)
+ *   - Qui hi té accés: Qualsevol, fins i tot anònims
  *****************************************************************/
 
 const HEADERS = {
@@ -18,18 +18,39 @@ const HEADERS = {
   Evaluations:  ['groupId','method','evaluatorId','payload']
 };
 
-const INDEX_URL = 'https://raw.githubusercontent.com/katwolo/Repartiment-de-punts/claude/app-script-code-from-url-9tu03y/index.html';
-
 function ss(){ return SpreadsheetApp.getActiveSpreadsheet(); }
 
-/* ---------- Servir l'aplicació ---------- */
-function doGet(){
-  setupSheets();
-  const html = UrlFetchApp.fetch(INDEX_URL).getContentText();
-  return HtmlService.createHtmlOutput(html)
-    .setTitle('Repartiment de punts')
-    .addMetaTag('viewport','width=device-width, initial-scale=1.0')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+function jsonOut(data){
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+/* ---------- GET: accions de lectura ---------- */
+function doGet(e){
+  try {
+    setupSheets();
+    const action = e && e.parameter && e.parameter.action;
+    if(action === 'loadState')  return jsonOut(loadState());
+    if(action === 'resetDemo')  return jsonOut(resetDemo());
+    return jsonOut({ ok: true, msg: 'API de Repartiment de Punts' });
+  } catch(err){
+    return jsonOut({ error: err.message });
+  }
+}
+
+/* ---------- POST: accions d'escriptura ---------- */
+function doPost(e){
+  try {
+    setupSheets();
+    const body   = JSON.parse(e.postData.contents);
+    const action = body.action;
+    if(action === 'saveStateBulk')   return jsonOut(saveStateBulk(body.stateJson));
+    if(action === 'submitEvaluation') return jsonOut(submitEvaluation(body.groupId, body.method, body.evaluatorId, body.payloadJson));
+    if(action === 'postMessage')      return jsonOut(postMessage(body.groupId, body.userId, body.text));
+    return jsonOut({ error: 'Acció desconeguda: ' + action });
+  } catch(err){
+    return jsonOut({ error: err.message });
+  }
 }
 
 /* ---------- Utilitats de fulls ---------- */
@@ -41,7 +62,6 @@ function getSheet(name){
     sh.setFrozenRows(1);
     return sh;
   }
-  // sincronitza la fila de capçaleres (per si s'ha actualitzat l'app, p.ex. nova columna "classe")
   const head = HEADERS[name];
   const current = sh.getRange(1,1,1,head.length).getValues()[0];
   let diff = false;
@@ -138,8 +158,7 @@ function loadState(){
   return { users: users, groups: groups };
 }
 
-/* ---------- ESCRIPTURA en bloc: usuaris, grups i tasques ----------
-   (NO toca Messages ni Evaluations per no trepitjar vots/xat concurrents) */
+/* ---------- ESCRIPTURA en bloc ---------- */
 function saveStateBulk(stateJson){
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
@@ -171,7 +190,6 @@ function saveStateBulk(stateJson){
     });
     writeSheet('Tasks', tasks);
 
-    // neteja missatges/valoracions de grups que ja no existeixen
     pruneOrphans((st.groups || []).map(function(g){ return String(g.id); }));
 
     return loadState();
@@ -189,7 +207,7 @@ function pruneOrphans(validIds){
   });
 }
 
-/* ---------- ESCRIPTURA granular: un sol vot (anònim) ---------- */
+/* ---------- ESCRIPTURA granular: un sol vot ---------- */
 function submitEvaluation(groupId, method, evaluatorId, payloadJson){
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);

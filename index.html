@@ -255,20 +255,30 @@ const SCALE_SVG = `<svg class="scale" viewBox="0 0 48 48" fill="none" xmlns="htt
   <path d="M17 40h14" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
 </svg>`;
 
-/* ---------- ESTAT / EMMAGATZEMATGE ----------
-   Totes les dades es desen al Google Sheets vinculat via google.script.run.
-*/
-const GAS = (typeof google!=='undefined' && google.script && google.script.run);
-let SESSION = null;   // usuari amb sessió iniciada (només al client, no es desa)
+/* ---------- ESTAT / API ---------- */
+const GAS_URL = 'https://script.google.com/macros/s/AKfycby2zJA0nQrAgPZXyqp5Y20TR5vSG5Q1j4WdRsAcyKTYogdeDUWUAT9CEe629yXMBBBI0Q/exec';
+
+function gasGet(action){
+  return fetch(GAS_URL + '?action=' + action)
+    .then(r => r.json())
+    .then(d => { if(d && d.error) throw new Error(d.error); return d; });
+}
+function gasPost(data){
+  return fetch(GAS_URL, { method:'POST', body: JSON.stringify(data) })
+    .then(r => r.json())
+    .then(d => { if(d && d.error) throw new Error(d.error); return d; });
+}
+
+let SESSION = null;
 
 /* persistència de configuració (usuaris, grups, tasques) */
 function save(){
-  google.script.run.withSuccessHandler(syncState).withFailureHandler(persistErr)
-    .saveStateBulk(JSON.stringify({users:state.users, groups:state.groups}));
+  gasPost({ action:'saveStateBulk', stateJson: JSON.stringify({users:state.users, groups:state.groups}) })
+    .then(syncState).catch(persistErr);
 }
 function syncState(s){ if(s && s.groups){ state=s; render(); } }
 function persistErr(e){ console.error('Error desant:', e); }
-function refreshNow(){ if(GAS) google.script.run.withSuccessHandler(syncState).loadState(); }
+function refreshNow(){ gasGet('loadState').then(syncState).catch(persistErr); }
 
 function seed(){
   return {
@@ -966,8 +976,8 @@ function tabChat(c,g,u){
 function sendMsg(gid){
   const inp=$('chat-in'); const txt=inp.value.trim(); if(!txt) return;
   groupById(gid).messages.push({userId:me().id,text:txt,ts:Date.now()});
-  if(GAS){ google.script.run.withSuccessHandler(syncState).withFailureHandler(persistErr).postMessage(gid, me().id, txt); }
-  else { localSave(); }
+  gasPost({ action:'postMessage', groupId:gid, userId:me().id, text:txt })
+    .then(syncState).catch(persistErr);
   render();
 }
 function mailModal(gid){
@@ -1094,9 +1104,8 @@ function submitM3(gid){
 }
 /* desa un vot a la full de càlcul (upsert d'una sola fila, amb bloqueig) */
 function persistEval(gid, method, payload){
-  if(GAS){ google.script.run.withSuccessHandler(syncState).withFailureHandler(persistErr)
-            .submitEvaluation(gid, method, me().id, JSON.stringify(payload)); }
-  else { localSave(); }
+  gasPost({ action:'submitEvaluation', groupId:gid, method:method, evaluatorId:me().id, payloadJson:JSON.stringify(payload) })
+    .then(syncState).catch(persistErr);
 }
 
 /* ----- RESULTATS ----- */
@@ -1210,7 +1219,7 @@ function saveProfile(){
 
 function resetDemo(){
   if(!confirm('Restaurar totes les dades de demostració? Es perdran els canvis.')) return;
-  google.script.run.withSuccessHandler(s=>{state=s;view='home';render();}).withFailureHandler(persistErr).resetDemo();
+  gasGet('resetDemo').then(s=>{state=s;view='home';render();}).catch(persistErr);
 }
 
 /* ---------- ARRENCADA ---------- */
@@ -1234,17 +1243,11 @@ function errScreen(e){
 function boot(){
   root.innerHTML = loadingScreen();
   const timeout = setTimeout(()=>{
-    root.innerHTML = errScreen({message:'Temps d\'espera exhaurit. Comprova que accedeixes via la URL del web app de Google Apps Script.'});
+    root.innerHTML = errScreen({message:'Temps d\'espera exhaurit. Comprova la connexió i torna a provar.'});
   }, 20000);
-  try {
-    google.script.run
-      .withSuccessHandler(s=>{ clearTimeout(timeout); state=s; render(); })
-      .withFailureHandler(e=>{ clearTimeout(timeout); root.innerHTML=errScreen(e); })
-      .loadState();
-  } catch(e){
-    clearTimeout(timeout);
-    root.innerHTML = errScreen({message:'No s\'ha pogut connectar amb el servidor. Accedeix via la URL del web app de Google Apps Script.'});
-  }
+  gasGet('loadState')
+    .then(s=>{ clearTimeout(timeout); state=s; render(); })
+    .catch(e=>{ clearTimeout(timeout); root.innerHTML=errScreen(e); });
 }
 boot();
 </script>
