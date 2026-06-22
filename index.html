@@ -256,9 +256,7 @@ const SCALE_SVG = `<svg class="scale" viewBox="0 0 48 48" fill="none" xmlns="htt
 </svg>`;
 
 /* ---------- ESTAT / EMMAGATZEMATGE ----------
-   Si s'executa dins de Google Apps Script (GAS), les dades es desen a la
-   FULL DE CÀLCUL VINCULADA mitjançant google.script.run. Si s'obre el
-   fitxer en local (sense GAS), fa servir localStorage com a alternativa.
+   Totes les dades es desen al Google Sheets vinculat via google.script.run.
 */
 const GAS = (typeof google!=='undefined' && google.script && google.script.run);
 let SESSION = null;   // usuari amb sessió iniciada (només al client, no es desa)
