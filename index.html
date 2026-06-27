@@ -950,7 +950,12 @@ function saveTask(gid,tid){
 }
 
 /* ----- XAT ----- */
+function dismissChatNotice(gid){
+  sessionStorage.setItem('chat_seen_'+gid+'_'+SESSION, '1');
+  const n=document.getElementById('chat-notice'); if(n) n.remove();
+}
 function tabChat(c,g,u){
+  const showNotice = !sessionStorage.getItem('chat_seen_'+g.id+'_'+u.id);
   c.innerHTML=`
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -960,6 +965,11 @@ function tabChat(c,g,u){
           <button class="btn btn-ghost btn-sm" onclick="mailModal('${g.id}')">✉ Enviar correu corporatiu</button>
         </div>
       </div>
+      ${showNotice?`<div class="notice n-info" id="chat-notice" style="margin-bottom:14px;align-items:flex-start">
+        <span class="ic">ℹ️</span>
+        <div style="flex:1"><b>Espai exclusiu per al treball</b><br><span style="font-size:13px">Aquest xat és per a comunicació relacionada amb el projecte. L'administració del centre pot consultar els missatges en cas de necessitat.</span></div>
+        <button onclick="dismissChatNotice('${g.id}')" style="background:none;border:none;cursor:pointer;font-size:16px;line-height:1;padding:0;color:var(--ink-soft)">✕</button>
+      </div>`:''}
       <div class="chat-box">
         <div class="chat-msgs" id="chatmsgs">
           ${g.messages.length?g.messages.map(msg=>{const s=userById(msg.userId);const mine=msg.userId===u.id;const cr=g.coordinatorId===msg.userId;
