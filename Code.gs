@@ -10,6 +10,10 @@
  *   - Qui hi té accés: Qualsevol, fins i tot anònims
  *****************************************************************/
 
+// Posa aquí l'ID del full de càlcul per usar-ne un de diferent al que conté l'script.
+// Deixa-ho buit ('') per usar sempre el full actiu (comportament per defecte).
+const SHEET_ID = '';
+
 const HEADERS = {
   Users:        ['id','name','email','pass','role','classe'],
   Groups:       ['id','name','subject','teacherId','coordinatorId','memberIds','grade','method','evalActive','resultsPublished'],
@@ -18,7 +22,7 @@ const HEADERS = {
   Evaluations:  ['groupId','method','evaluatorId','payload']
 };
 
-function ss(){ return SpreadsheetApp.getActiveSpreadsheet(); }
+function ss(){ return SHEET_ID ? SpreadsheetApp.openById(SHEET_ID) : SpreadsheetApp.getActiveSpreadsheet(); }
 
 function jsonOut(data){
   return ContentService.createTextOutput(JSON.stringify(data))
