@@ -774,6 +774,7 @@ function renderGroup(m,u){
   let tabs=[['resum','Resum'],['tasques','Tasques'],['chat','Xat intern']];
   if(g.evalActive || manage || isCoord) tabs.push(['valoracio','Valoració']);
   if(manage || isCoord) tabs.push(['resultats','Resultats']);
+  if(!manage && !isCoord && g.resultsPublished && !g.evalActive) tabs.push(['resultats','La meva nota']);
   if(!tabs.find(t=>t[0]===groupTab)) groupTab='resum';
 
   m.innerHTML=`
@@ -822,7 +823,7 @@ function tabResum(c,g,u,r,p){
       </div>
     </div>
     ${p.manage?managePanel(g):''}
-    ${(p.isCoord||p.manage)?evalControlPanel(g,p.isCoord):''}
+    ${(p.isCoord||p.manage)?evalControlPanel(g,p.isCoord,p.manage):''}
     ${g.evalActive&&prog!=null?`<div class="notice n-info" style="margin-top:18px"><span class="ic">📊</span><div>Valoració en curs amb el <b>${METHODS[g.method].name}</b>. Han valorat <b>${prog}/${g.memberIds.length}</b> membres.</div></div>`:''}`;
 }
 function managePanel(g){
@@ -852,19 +853,35 @@ function saveManage(gid){
 }
 function togglePublish(gid){ const g=groupById(gid); g.resultsPublished=!g.resultsPublished; save(); render(); }
 
-function evalControlPanel(g, isCoord){
+function hasEvaluations(g){
+  return Object.keys(g.evalData.m1||{}).length > 0 ||
+         Object.keys(g.evalData.m3||{}).length > 0;
+}
+function evalControlPanel(g, isCoord, isManage){
+  const locked = isCoord ? g.evalActive : hasEvaluations(g);
+  const lockMsg = isCoord
+    ? 'Un cop activada la valoració, només el professor pot canviar el mètode.'
+    : 'Ja hi ha valoracions enviades; el mètode no es pot canviar.';
+  const methodPick = locked
+    ? `<div class="method-pick">
+        ${[1,2,3].map(n=>`<div class="method-opt ${g.method===n?'sel':''}" style="opacity:.6;cursor:default">
+          <b>${METHODS[n].ic} Mètode ${n}: ${METHODS[n].name} <span class="badge">${METHODS[n].short}</span> ${g.method===n?'<span class="tag tag-green" style="padding:1px 8px">✓ triat</span>':''}</b>
+          <p>${methodBlurb(n)}</p></div>`).join('')}
+      </div>
+      <div class="notice n-warn" style="margin-top:10px"><span class="ic">🔒</span><div>${lockMsg}</div></div>`
+    : `<div class="method-pick">
+        ${[1,2,3].map(n=>`<div class="method-opt ${g.method===n?'sel':''}" onclick="pickMethod('${g.id}',${n})">
+          <b>${METHODS[n].ic} Mètode ${n}: ${METHODS[n].name} <span class="badge">${METHODS[n].short}</span> ${g.method===n?'<span class="tag tag-green" style="padding:1px 8px">✓ triat</span>':''}</b>
+          <p>${methodBlurb(n)}</p></div>`).join('')}
+      </div>`;
   return `<div class="card" style="margin-top:18px;border:1.5px solid var(--coral)">
     <h3>${isCoord?'⭐ Panell del coordinador/a':'🎚️ Configuració de la valoració'}</h3>
     <div class="desc">Tria <b>quin dels tres mètodes</b> es farà servir i obre o tanca la valoració anònima de l'equip.</div>
-    <div class="method-pick">
-      ${[1,2,3].map(n=>`<div class="method-opt ${g.method===n?'sel':''}" onclick="pickMethod('${g.id}',${n})">
-        <b>${METHODS[n].ic} Mètode ${n}: ${METHODS[n].name} <span class="badge">${METHODS[n].short}</span> ${g.method===n?'<span class="tag tag-green" style="padding:1px 8px">✓ triat</span>':''}</b>
-        <p>${methodBlurb(n)}</p></div>`).join('')}
-    </div>
+    ${methodPick}
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
       <button class="btn ${g.evalActive?'btn-danger':'btn-coral'} btn-sm" onclick="toggleEval('${g.id}')" ${!g.method?'disabled style="opacity:.5;cursor:not-allowed"':''}>
         ${g.evalActive?'⏹ Tancar valoració':'▶ Activar valoració'}</button>
-      ${g.evalActive?'<span class="help" style="align-self:center">Valoració oberta. Per canviar de mètode, tria\'n un altre i confirma el tancament.</span>':(!g.method?'<span class="help" style="align-self:center">Tria primer un mètode.</span>':'<span class="help" style="align-self:center">Mètode triat. Activa la valoració quan vulguis.</span>')}
+      ${!g.method?'<span class="help" style="align-self:center">Tria primer un mètode.</span>':(!g.evalActive?'<span class="help" style="align-self:center">Mètode triat. Activa la valoració quan vulguis.</span>':'')}
     </div>
   </div>`;
 }
@@ -878,8 +895,19 @@ function methodBlurb(n){
 function pickMethod(gid,n){
   const g=groupById(gid);
   if(g.method===n) return;
+  const u=me();
+  const isCoord=roleInGroup(u.id,g)==='coordinator';
+  const isManage=(u.role==='teacher'||u.role==='admin');
+  if(isCoord && g.evalActive){
+    alert('Un cop activada la valoració, el mètode només el pot canviar el professor.');
+    return;
+  }
+  if(isManage && hasEvaluations(g)){
+    alert('Ja hi ha valoracions enviades. El mètode no es pot modificar.');
+    return;
+  }
   if(g.evalActive){
-    if(!confirm('La valoració està oberta. Per triar el mètode '+n+' cal tancar-la. Vols tancar-la i canviar de mètode?')) return;
+    if(!confirm('Cal tancar la valoració per canviar de mètode. Continuar?')) return;
     g.evalActive=false;
   }
   g.method=n; save(); render();
@@ -1120,6 +1148,24 @@ function persistEval(gid, method, payload){
 
 /* ----- RESULTATS ----- */
 function tabResultats(c,g,u,p){
+  // Vista d'alumne regular: només la seva pròpia nota
+  if(!p.manage && !p.isCoord){
+    if(!g.resultsPublished || g.evalActive){
+      c.innerHTML=`<div class="notice n-warn"><span class="ic">⏳</span><div>Els resultats encara no estan disponibles. El professor els publicarà quan l'avaluació hagi finalitzat.</div></div>`;
+      return;
+    }
+    if(!g.method){ c.innerHTML=`<div class="notice n-warn"><span class="ic">⚠️</span><div>El mètode d'avaluació no s'ha configurat.</div></div>`; return; }
+    const res=results(g);
+    const myRow=res.find(r=>r.id===u.id);
+    c.innerHTML=`<div class="notice n-info"><span class="ic">${METHODS[g.method].ic}</span><div><b>${METHODS[g.method].name}</b> · Nota base del treball: <b>${g.grade!=null?fmt(g.grade):'—'}/10</b>. Tots els vots van ser anònims.</div></div>
+      <div class="card" style="max-width:420px;margin-top:12px">
+        <h3 style="margin-bottom:12px">La teva nota</h3>
+        <div style="font-size:15px;margin-bottom:6px"><b>${esc(u.name)}</b></div>
+        <div class="help" style="margin-bottom:12px">${myRow&&myRow.detail?myRow.detail:'Sense valoracions rebudes.'}</div>
+        <div style="font-size:28px;font-weight:800;color:var(--teal)">${myRow&&myRow.final!=null?fmt(myRow.final)+' / 10':'—'}</div>
+      </div>`;
+    return;
+  }
   if(!g.method){ c.innerHTML=`<div class="notice n-warn"><span class="ic">⚠️</span><div>Encara no hi ha cap mètode configurat.</div></div>`; return; }
   if(g.grade==null){ c.innerHTML=`<div class="notice n-warn"><span class="ic">📝</span><div>El professorat encara no ha posat la <b>nota base</b> del treball. Els resultats es calcularan automàticament quan ho faci.</div></div>`; }
   const res=results(g);
