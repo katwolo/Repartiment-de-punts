@@ -258,8 +258,9 @@ const SCALE_SVG = `<svg class="scale" viewBox="0 0 48 48" fill="none" xmlns="htt
 /* ---------- ESTAT / API ---------- */
 const GAS_URL = 'https://script.google.com/macros/s/AKfycby2zJA0nQrAgPZXyqp5Y20TR5vSG5Q1j4WdRsAcyKTYogdeDUWUAT9CEe629yXMBBBI0Q/exec';
 
-function gasGet(action){
-  return fetch(GAS_URL + '?action=' + action)
+function gasGet(action, params={}){
+  const qs = new URLSearchParams({action, ...params}).toString();
+  return fetch(GAS_URL + '?' + qs)
     .then(r => r.json())
     .then(d => { if(d && d.error) throw new Error(d.error); return d; });
 }
@@ -647,22 +648,104 @@ function delUser(id){
 function importModal(){
   openModal(`
     <h2>⇪ Importar alumnat</h2>
-    <div class="msub">Enganxa la llista (un alumne per línia). Pots copiar columnes directament d'un full de càlcul.</div>
-    <div class="inline-form">
-      <div class="f-row">
-        <div class="field"><label>Classe</label>
-          <input id="im-class" list="im-cls" value="A" placeholder="A, B, C...">
-          <datalist id="im-cls"><option>A</option><option>B</option><option>C</option>${classesOf().map(c=>`<option>${esc(c)}</option>`).join('')}</datalist></div>
-        <div class="field"><label>Contrasenya per defecte</label><input id="im-pass" value="1234"></div>
-      </div>
-      <div class="field"><label>Domini per als correus automàtics</label><input id="im-domain" value="alumnes.cat">
-        <div class="help">Només s'utilitza per a les línies que no porten correu.</div></div>
-      <div class="field"><label>Llista</label>
-        <textarea id="im-data" rows="8" placeholder="Anna Ferrer, anna@alumnes.cat&#10;Bru Soler; bru@alumnes.cat&#10;Carla Vidal"></textarea>
-        <div class="help">Per línia: <b>Nom, correu</b> · o només <b>Nom</b> (es genera el correu). Accepta comes, punts i comes o tabuladors com a separador.</div></div>
+    <div style="display:flex;gap:6px;margin-bottom:18px">
+      <button class="btn btn-coral btn-sm" id="im-tab-manual" onclick="showImportTab('manual')">✏️ Manual</button>
+      <button class="btn btn-ghost btn-sm" id="im-tab-classroom" onclick="showImportTab('classroom')">🎓 Google Classroom</button>
     </div>
-    <div class="modal-foot"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel·la</button>
-      <button class="btn btn-primary btn-sm" style="width:auto" onclick="doImport()">Importar</button></div>`,'wide');
+    <div id="im-panel-manual">
+      <div class="msub" style="margin-bottom:14px">Enganxa la llista (un alumne per línia). Pots copiar columnes directament d'un full de càlcul.</div>
+      <div class="inline-form">
+        <div class="f-row">
+          <div class="field"><label>Classe</label>
+            <input id="im-class" list="im-cls" value="A" placeholder="A, B, C...">
+            <datalist id="im-cls"><option>A</option><option>B</option><option>C</option>${classesOf().map(c=>`<option>${esc(c)}</option>`).join('')}</datalist></div>
+          <div class="field"><label>Contrasenya per defecte</label><input id="im-pass" value="1234"></div>
+        </div>
+        <div class="field"><label>Domini per als correus automàtics</label><input id="im-domain" value="alumnes.cat">
+          <div class="help">Només s'utilitza per a les línies que no porten correu.</div></div>
+        <div class="field"><label>Llista</label>
+          <textarea id="im-data" rows="8" placeholder="Anna Ferrer, anna@alumnes.cat&#10;Bru Soler; bru@alumnes.cat&#10;Carla Vidal"></textarea>
+          <div class="help">Per línia: <b>Nom, correu</b> · o només <b>Nom</b> (es genera el correu). Accepta comes, punts i comes o tabuladors com a separador.</div></div>
+      </div>
+      <div class="modal-foot"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel·la</button>
+        <button class="btn btn-primary btn-sm" style="width:auto" onclick="doImport()">Importar</button></div>
+    </div>
+    <div id="im-panel-classroom" class="hidden">
+      <div class="msub" style="margin-bottom:14px">Carrega les aules actives del teu compte Google Classroom i importa l'alumnat directament.</div>
+      <div class="inline-form">
+        <div class="f-row">
+          <div class="field"><label>Classe (etiqueta interna)</label>
+            <input id="imc-class" list="imc-cls" value="A" placeholder="A, B, C...">
+            <datalist id="imc-cls"><option>A</option><option>B</option><option>C</option>${classesOf().map(c=>`<option>${esc(c)}</option>`).join('')}</datalist></div>
+          <div class="field"><label>Contrasenya per defecte</label><input id="imc-pass" value="1234"></div>
+        </div>
+        <div id="imc-courses-wrap">
+          <button class="btn btn-ghost btn-sm" onclick="loadClassrooms()">🔄 Carregar aules</button>
+        </div>
+        <div id="imc-students-wrap" class="hidden"></div>
+      </div>
+      <div class="modal-foot"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel·la</button>
+        <button class="btn btn-primary btn-sm" style="width:auto" id="imc-import-btn" class="hidden" onclick="doClassroomImport()" disabled>Importar seleccionats</button></div>
+    </div>
+  `,'wide');
+}
+function showImportTab(tab){
+  $('im-panel-manual').classList.toggle('hidden', tab!=='manual');
+  $('im-panel-classroom').classList.toggle('hidden', tab!=='classroom');
+  $('im-tab-manual').className='btn btn-sm '+(tab==='manual'?'btn-coral':'btn-ghost');
+  $('im-tab-classroom').className='btn btn-sm '+(tab==='classroom'?'btn-coral':'btn-ghost');
+}
+function loadClassrooms(){
+  const wrap=$('imc-courses-wrap');
+  wrap.innerHTML='<span class="help">Carregant aules…</span>';
+  gasGet('getClassrooms').then(d=>{
+    if(!d.courses||!d.courses.length){ wrap.innerHTML='<div class="notice n-warn"><span class="ic">⚠️</span><div>No s\'han trobat aules actives al teu compte.</div></div>'; return; }
+    wrap.innerHTML=`<div class="field"><label>Aula de Google Classroom</label>
+      <select id="imc-course" onchange="loadClassroomStudents(this.value)">
+        <option value="">— Tria una aula —</option>
+        ${d.courses.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}${c.section?' · '+esc(c.section):''}</option>`).join('')}
+      </select></div>`;
+  }).catch(e=>{ wrap.innerHTML=`<div class="notice n-warn"><span class="ic">⚠️</span><div>${esc(e.message)}</div></div>`; });
+}
+function loadClassroomStudents(courseId){
+  const wrap=$('imc-students-wrap');
+  const btn=$('imc-import-btn');
+  if(!courseId){ wrap.classList.add('hidden'); btn.disabled=true; return; }
+  wrap.classList.remove('hidden');
+  wrap.innerHTML='<span class="help">Carregant alumnat…</span>';
+  btn.disabled=true;
+  gasGet('getClassroomStudents',{courseId}).then(d=>{
+    if(!d.students||!d.students.length){ wrap.innerHTML='<div class="notice n-warn"><span class="ic">⚠️</span><div>Aquesta aula no té alumnat.</div></div>'; return; }
+    const existing=new Set(state.users.map(u=>u.email.toLowerCase()));
+    wrap.innerHTML=`<div class="field"><label>${d.students.length} alumnes trobats · <label style="cursor:pointer"><input type="checkbox" onchange="toggleAllClassroom(this)"> Seleccionar-los tots</label></label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:220px;overflow:auto;margin-top:6px">
+        ${d.students.map(s=>`<label style="display:flex;gap:8px;align-items:center;font-size:13px;background:var(--bg);border:1.5px solid var(--line);border-radius:9px;padding:7px 10px;cursor:pointer;${existing.has(s.email.toLowerCase())?'opacity:.45':''}">
+          <input type="checkbox" class="imc-stu" value="${esc(s.email)}" data-name="${esc(s.name)}" ${existing.has(s.email.toLowerCase())?'disabled title="Ja existeix"':''}>
+          <span style="flex:1"><b>${esc(s.name)}</b><br><small style="color:var(--ink-soft)">${esc(s.email)}</small></span></label>`).join('')}
+      </div></div>`;
+    btn.disabled=false;
+  }).catch(e=>{ wrap.innerHTML=`<div class="notice n-warn"><span class="ic">⚠️</span><div>${esc(e.message)}</div></div>`; });
+}
+function toggleAllClassroom(chk){
+  document.querySelectorAll('.imc-stu:not(:disabled)').forEach(c=>c.checked=chk.checked);
+}
+function doClassroomImport(){
+  const cls=$('imc-class').value.trim();
+  const pass=$('imc-pass').value.trim()||'1234';
+  const checks=[...document.querySelectorAll('.imc-stu:checked')];
+  if(!checks.length){ alert('Selecciona almenys un alumne.'); return; }
+  const existing=new Set(state.users.map(u=>u.email.toLowerCase()));
+  let added=0, i=0;
+  checks.forEach(c=>{
+    const email=c.value.toLowerCase();
+    if(existing.has(email)) return;
+    existing.add(email);
+    state.users.push({id:'u_'+Date.now()+'_'+(i++), name:c.dataset.name, email, pass, role:'student', classe:cls});
+    added++;
+  });
+  save(); closeModal();
+  alert('Importació completada.\nAfegits: '+added);
+  render();
 }
 function slugEmail(name,domain){
   const base=name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9\s]/g,'').trim().split(/\s+/).join('.');

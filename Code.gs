@@ -34,8 +34,10 @@ function doGet(e){
   try {
     setupSheets();
     const action = e && e.parameter && e.parameter.action;
-    if(action === 'loadState')  return jsonOut(loadState());
-    if(action === 'resetDemo')  return jsonOut(resetDemo());
+    if(action === 'loadState')         return jsonOut(loadState());
+    if(action === 'resetDemo')         return jsonOut(resetDemo());
+    if(action === 'getClassrooms')     return jsonOut(getClassrooms());
+    if(action === 'getClassroomStudents') return jsonOut(getClassroomStudents(e.parameter.courseId));
     return jsonOut({ ok: true, msg: 'API de Repartiment de Punts' });
   } catch(err){
     return jsonOut({ error: err.message });
@@ -295,6 +297,32 @@ function seedData(){
   ]);
 
   writeSheet('Evaluations', []);
+}
+
+/* ---------- Google Classroom ---------- */
+function getClassrooms(){
+  try {
+    const res = Classroom.Courses.list({ courseStates: ['ACTIVE'], teacherId: 'me', pageSize: 50 });
+    const courses = (res.courses || []).map(function(c){
+      return { id: c.id, name: c.name, section: c.section || '' };
+    });
+    return { courses: courses };
+  } catch(err){
+    return { error: 'Error accedint a Google Classroom: ' + err.message };
+  }
+}
+
+function getClassroomStudents(courseId){
+  if(!courseId) return { error: 'Falta courseId' };
+  try {
+    const res = Classroom.Courses.Students.list(courseId, { pageSize: 200 });
+    const students = (res.students || []).map(function(s){
+      return { name: s.profile.name.fullName, email: s.profile.emailAddress };
+    });
+    return { students: students };
+  } catch(err){
+    return { error: 'Error llegint els alumnes: ' + err.message };
+  }
 }
 
 /* ---------- Menú d'ajuda dins de la full ---------- */
